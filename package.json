@@ -1,0 +1,27 @@
+{
+  "name": "tonband_plugin",
+  "version": "1.0.0",
+  "description": "",
+  "cordova": {
+    "id": "cordova-plugin-tonband",
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jagaa1103/tonband_plugin.git"
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios"
+  ],
+  "author": "Jagaa",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jagaa1103/tonband_plugin/issues"
+  },
+  "homepage": "https://github.com/jagaa1103/tonband_plugin#readme"
+}
