@@ -1,13 +1,15 @@
 /********* tonband_plugin.m Cordova Plugin Implementation *******/
 
 #import <Cordova/CDV.h>
-#import <Bluetooth.h>
+#import "Bluetooth.h"
 @interface tonband_plugin : CDVPlugin {
   // Member variables go here.
+    Bluetooth *bluetooth;
 }
 
-- (void)coolMethod:(CDVInvokedUrlCommand*)command;
-- (void)checkBluetooth:(CDVInvokedUrlCommand*)command;
+-(void)coolMethod:(CDVInvokedUrlCommand*)command;
+-(void)checkBluetooth:(CDVInvokedUrlCommand*)command;
+-(void)scan:(CDVInvokedUrlCommand*)command;
 @end
 
 @implementation tonband_plugin
@@ -30,8 +32,17 @@
 -(void)checkBluetooth:(CDVInvokedUrlCommand*)command
 {
     NSLog(@":::::: checkBluetooth ::::::");
+    bluetooth = [[Bluetooth alloc] init];
 }
 
+-(void)scan:(CDVInvokedUrlCommand*)command
+{
+    NSLog(@":::::: startScan ::::::");
+    if(bluetooth == nil){
+        bluetooth = [[Bluetooth alloc] init];
+    }
+    [bluetooth startScan];
+}
 
 
 @end

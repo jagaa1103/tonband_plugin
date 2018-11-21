@@ -26,6 +26,7 @@ CBPeripheral *connectedDevice = nil;
         centralManager = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
         NSLog(@"============ START_SERVICE ===========");
         [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:@"START_SERVICE"];
+        
     }
     return self;
 }
