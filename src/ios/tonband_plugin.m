@@ -40,6 +40,14 @@
     }];
 }
 
+-(void)startLoop:(CDVInvokedUrlCommand*)command
+{
+    [self.commandDelegate runInBackground:^{
+        [bluetooth startLoop];
+    }];
+}
+
+
 -(void) broadcastReceiver : (NSNotification * ) notification
 {
     NSDictionary *dict = [notification object];
