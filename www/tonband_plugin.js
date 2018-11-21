@@ -8,7 +8,7 @@ exports.checkBluetooth = function(success, error){
     exec(success, error, 'tonband_plugin', 'checkBluetooth');
 }
 
-exports.scan = function(serviceUUID, success, error){
+exports.scan = function(success, error, serviceUUID){
     exec(success, error, 'tonband_plugin', 'scan', [serviceUUID]);
 }
 

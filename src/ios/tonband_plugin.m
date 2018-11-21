@@ -5,35 +5,25 @@
 @interface tonband_plugin : CDVPlugin {
   // Member variables go here.
     Bluetooth *bluetooth;
-    NSString *callbackId;
+    CDVPluginResult* pluginResult;
 }
 
--(void)coolMethod:(CDVInvokedUrlCommand*)command;
 -(void)checkBluetooth:(CDVInvokedUrlCommand*)command;
 -(void)scan:(CDVInvokedUrlCommand*)command;
+
+@property (nonatomic, strong) NSString* myCallbackId;
 
 @end
 
 @implementation tonband_plugin
 
-- (void)coolMethod:(CDVInvokedUrlCommand*)command
-{
-    CDVPluginResult* pluginResult = nil;
-    NSString* echo = [command.arguments objectAtIndex:0];
-
-    if (echo != nil && [echo length] > 0) {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:echo];
-    } else {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
-    }
-
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-}
-
 
 -(void)checkBluetooth:(CDVInvokedUrlCommand*)command
 {
-    callbackId = command.callbackId;
+    self.myCallbackId = command.callbackId;
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [pluginResult setKeepCallbackAsBool:YES];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:self.myCallbackId];
     NSLog(@":::::: checkBluetooth ::::::");
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(broadcastReceiver:) name:@"tonband_channel" object:nil];
     bluetooth = [[Bluetooth alloc] init];
@@ -41,24 +31,24 @@
 
 -(void)scan:(CDVInvokedUrlCommand*)command
 {
-    callbackId = command.callbackId;
-    NSLog(@":::::: startScan ::::::");
-    if(bluetooth == nil){
-        bluetooth = [[Bluetooth alloc] init];
-    }
-    [bluetooth startScan];
+    self.myCallbackId = command.callbackId;
+    [self.commandDelegate runInBackground:^{
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [pluginResult setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.myCallbackId];
+        [bluetooth startScan];
+    }];
 }
 
 -(void) broadcastReceiver : (NSNotification * ) notification
 {
     NSDictionary *dict = [notification object];
-    NSLog(@"%@", dict);
     NSString *time = [self getTime];
-//    _textView.text = [NSString stringWithFormat:@"%@\n%@ >> %@", _textView.text, time, dict];
     NSString *message = [NSString stringWithFormat:@"%@: %@", time, dict];
     NSLog(@"%@", message);
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:message];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:message];
+    [pluginResult setKeepCallbackAsBool:YES];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:self.myCallbackId];
 }
 
 
