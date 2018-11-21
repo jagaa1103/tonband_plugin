@@ -26,7 +26,7 @@ CBPeripheral *connectedDevice = nil;
         centralManager = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
         NSLog(@"============ START_SERVICE ===========");
         [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:@"START_SERVICE"];
-        
+
     }
     return self;
 }
@@ -59,6 +59,7 @@ CBPeripheral *connectedDevice = nil;
 {
     connectedDevice = nil;
     [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:@"DEVICE_DISCONNECTED"];
+    NSLog(%@"%@", msg);
 }
 -(void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral
 {
@@ -67,11 +68,13 @@ CBPeripheral *connectedDevice = nil;
     connectedDevice.delegate = self;
     [connectedDevice discoverServices:nil];
     NSString *msg = [NSString stringWithFormat:@"%@: %@", @"DEVICE_CONNECTED", [connectedDevice.identifier UUIDString]];
+    NSLog(%@"%@", msg);
     [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:msg];
 }
 - (void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)RSSI
 {
     [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:@"NEW_DEVICE_SCANNED"];
+    NSLog(%@"%@", msg);
     [devices addObject:peripheral];
     [centralManager connectPeripheral:devices[0] options:nil];
 }
