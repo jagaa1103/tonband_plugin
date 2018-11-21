@@ -41,6 +41,7 @@
 
 -(void)scan:(CDVInvokedUrlCommand*)command
 {
+    callbackId = command.callbackId;
     NSLog(@":::::: startScan ::::::");
     if(bluetooth == nil){
         bluetooth = [[Bluetooth alloc] init];
