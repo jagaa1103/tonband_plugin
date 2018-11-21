@@ -1,12 +1,13 @@
 /********* tonband_plugin.m Cordova Plugin Implementation *******/
 
 #import <Cordova/CDV.h>
-
+#import <Bluetooth.h>
 @interface tonband_plugin : CDVPlugin {
   // Member variables go here.
 }
 
 - (void)coolMethod:(CDVInvokedUrlCommand*)command;
+- (void)checkBluetooth:(CDVInvokedUrlCommand*)command;
 @end
 
 @implementation tonband_plugin
@@ -24,5 +25,13 @@
 
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
+
+
+-(void)checkBluetooth:(CDVInvokedUrlCommand*)command
+{
+    NSLog(@":::::: checkBluetooth ::::::");
+}
+
+
 
 @end
