@@ -34,11 +34,7 @@
     [self.commandDelegate sendPluginResult:pluginResult callbackId:self.myCallbackId];
     NSLog(@":::::: checkBluetooth ::::::");
 }
--(void)connect:(CDVInvokedUrlCommand*)command
-{
-    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-}
+
 -(void)scan:(CDVInvokedUrlCommand*)command
 {
     self.myCallbackId = command.callbackId;
@@ -48,6 +44,14 @@
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.myCallbackId];
         [bluetooth startScan];
     }];
+}
+
+-(void)connect:(CDVInvokedUrlCommand*)command
+{
+    NSLog(@"tonband_plugin >> %@", command.arguments[0]);
+    [bluetooth connect:command.arguments[0]];
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 

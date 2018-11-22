@@ -17,7 +17,7 @@ exports.scan = function(success, error){
 }
 
 exports.connect = function(deviceID, success, error){
-    exec(success, error, 'tonband_plugin', 'scan', [deviceID]);
+    exec(success, error, 'tonband_plugin', 'connect', [deviceID]);
 }
 
 exports.startLoop = function(success, error){
