@@ -7,7 +7,7 @@
     Bluetooth *bluetooth;
     CDVPluginResult* pluginResult;
 }
--(void)startService;
+-(void)startService:(CDVInvokedUrlCommand*)command;
 -(void)checkBluetooth:(CDVInvokedUrlCommand*)command;
 -(void)scan:(CDVInvokedUrlCommand*)command;
 -(void)connect:(CDVInvokedUrlCommand*)command;
