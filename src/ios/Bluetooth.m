@@ -58,6 +58,7 @@ CBPeripheral *connectedDevice = nil;
 
 -(Boolean) connect:(NSString *) uuid
 {
+    if(connectedDevice != nil) return true;
     CBPeripheral *detectedDevice = nil;
     for(CBPeripheral *peripheral in devices){
         if([[peripheral.identifier UUIDString] isEqualToString:uuid]) detectedDevice = peripheral;
@@ -116,12 +117,11 @@ NSTimer *timer = nil;
 }
 - (void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)RSSI
 {
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:@"NEW_DEVICE_SCANNED"];
-    NSLog(@"NEW_DEVICE_SCANNED");
+//    [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:@"NEW_DEVICE_SCANNED"];
     NSDictionary *device = @{@"uuid": [peripheral.identifier UUIDString], @"name": peripheral.name};
     [_delegate onScannedDevices:device];
     [devices addObject:peripheral];
-    [centralManager connectPeripheral:devices[0] options:nil];
+//    [centralManager connectPeripheral:devices[0] options:nil];
 }
 
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverServices:(NSError *)error

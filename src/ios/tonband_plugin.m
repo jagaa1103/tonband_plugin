@@ -83,18 +83,29 @@
 }
 
 
-- (NSDictionary *)onConnected: (NSDictionary *) device {
+- (void)onConnected: (NSDictionary *) device {
     NSLog(@"onConnected: name: %@, uuid: %@", device[@"name"], device[@"uuid"]);
-    return device;
 }
 
-- (NSDictionary *)onDataChanged {
+- (void)onDataChanged {
     NSLog(@"onDataChanged");
 }
 
-- (NSDictionary *)onScannedDevices: (NSDictionary *) device {
-    NSLog(@"onScannedDevices: name: %@, uuid: %@", device[@"name"], device[@"uuid"]);
-    return device;
+- (void)onScannedDevices: (NSDictionary *) device {
+    NSError *error = nil;
+    NSData *data = [NSJSONSerialization dataWithJSONObject:device options:NSJSONWritingPrettyPrinted error:&error];
+    if(error == nil){
+        NSString *jsonString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        NSLog(@"onScannedDevices: %@", jsonString);
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:jsonString];
+        [pluginResult setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:_myCallbackId];
+    }else{
+        NSLog(@"onScannedDevices: Error: %@", error.description);
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+        [pluginResult setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:_myCallbackId];
+    }
 }
 
 @end

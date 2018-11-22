@@ -11,9 +11,9 @@
 
 
 @protocol BluetoothProtocol <NSObject>
--(NSDictionary *) onScannedDevices: (NSDictionary *) device;
--(NSDictionary *) onConnected: (NSDictionary *) device;
--(NSDictionary *) onDataChanged;
+-(void) onScannedDevices: (NSDictionary *) device;
+-(void) onConnected: (NSDictionary *) device;
+-(void) onDataChanged;
 @end
 
 
