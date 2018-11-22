@@ -18,7 +18,7 @@
 
 @implementation tonband_plugin
 
--(void)startService
+-(void)startService:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"::::::::: startService ::::::::::");
     bluetooth = [[Bluetooth alloc] init];
