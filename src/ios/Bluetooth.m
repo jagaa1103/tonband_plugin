@@ -26,7 +26,6 @@ CBPeripheral *connectedDevice = nil;
         centralManager = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
         NSLog(@"============ START_SERVICE ===========");
         [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:@"START_SERVICE"];
-
     }
     return self;
 }
@@ -47,7 +46,8 @@ CBPeripheral *connectedDevice = nil;
             break;
     }
 }
-
+// ******************* Commands ****************************************
+// *********************************************************************
 -(void) startScan
 {
     NSLog(@"========== startScan ============");
@@ -55,6 +55,47 @@ CBPeripheral *connectedDevice = nil;
     CBUUID *serviceUUID = [CBUUID UUIDWithString:SERVICE_UUID];
     [centralManager scanForPeripheralsWithServices:@[serviceUUID] options:nil];
 }
+
+-(Boolean) connect:(NSString *) uuid
+{
+    CBPeripheral *detectedDevice = nil;
+    for(CBPeripheral *peripheral in devices){
+        if([[peripheral.identifier UUIDString] isEqualToString:uuid]) detectedDevice = peripheral;
+    }
+    if(detectedDevice != nil) {
+        [centralManager connectPeripheral:detectedDevice options:nil];
+        return true;
+    }else{
+        return false;
+    }
+}
+
+NSTimer *timer = nil;
+-(void) startLoop
+{
+    [self sendRequestTemp];
+    timer = [NSTimer scheduledTimerWithTimeInterval:10.0f target:self selector:@selector(sendRequestTemp) userInfo:nil repeats:YES];
+}
+
+-(void) parseHeader :(uint8_t[]) data :(NSInteger) length
+{
+    
+    for(int i = 0; i < length; i++){
+        if(i == 0 && data[i] != 247) return;
+        if(i == 1) {
+            switch (data[i]) {
+                case 16:
+                    NSLog(@"Header: TEMPERATURE_CFM_HEADER");
+                    [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:@"TEMPERATURE_CFM_HEADER"];
+                    break;
+            }
+        }
+    }
+}
+
+
+// *********************************************************************
+// *********************************************************************
 
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error
 {
@@ -69,13 +110,16 @@ CBPeripheral *connectedDevice = nil;
     connectedDevice.delegate = self;
     [connectedDevice discoverServices:nil];
     NSString *msg = [NSString stringWithFormat:@"%@: %@", @"DEVICE_CONNECTED", [connectedDevice.identifier UUIDString]];
-    NSLog(@"%@", msg);
+    NSDictionary *dict = @{@"uuid": [connectedDevice.identifier UUIDString], @"name": connectedDevice.name};
+    [_delegate onConnected: dict];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:msg];
 }
 - (void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)RSSI
 {
     [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:@"NEW_DEVICE_SCANNED"];
     NSLog(@"NEW_DEVICE_SCANNED");
+    NSDictionary *device = @{@"uuid": [peripheral.identifier UUIDString], @"name": peripheral.name};
+    [_delegate onScannedDevices:device];
     [devices addObject:peripheral];
     [centralManager connectPeripheral:devices[0] options:nil];
 }
@@ -121,29 +165,6 @@ CBCharacteristic *txCharacteristic = nil;
     if(rxCharacteristic != nil){
         @try{ [connectedDevice writeValue:data forCharacteristic:rxCharacteristic type:CBCharacteristicWriteWithoutResponse]; }
         @catch(NSException *err){ NSLog(@"%@", err.debugDescription); }
-    }
-}
-
-NSTimer *timer = nil;
--(void) startLoop
-{
-    [self sendRequestTemp];
-    timer = [NSTimer scheduledTimerWithTimeInterval:10.0f target:self selector:@selector(sendRequestTemp) userInfo:nil repeats:YES];
-}
-
--(void) parseHeader :(uint8_t[]) data :(NSInteger) length
-{
-    
-    for(int i = 0; i < length; i++){
-        if(i == 0 && data[i] != 247) return;
-        if(i == 1) {
-            switch (data[i]) {
-                case 16:
-                    NSLog(@"Header: TEMPERATURE_CFM_HEADER");
-                    [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:@"TEMPERATURE_CFM_HEADER"];
-                    break;
-            }
-        }
     }
 }
 

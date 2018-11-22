@@ -9,9 +9,20 @@
 #import <Foundation/Foundation.h>
 #import <CoreBluetooth/CoreBluetooth.h>
 
+
+@protocol BluetoothProtocol <NSObject>
+-(NSDictionary *) onScannedDevices: (NSDictionary *) device;
+-(NSDictionary *) onConnected: (NSDictionary *) device;
+-(NSDictionary *) onDataChanged;
+@end
+
+
 @interface Bluetooth : NSObject <CBCentralManagerDelegate, CBPeripheralDelegate>
 
+
 -(void) startScan;
+-(Boolean) connect:(NSString *) uuid;
 -(void) startLoop;
+@property(nonatomic, retain) id<BluetoothProtocol> delegate;
 
 @end

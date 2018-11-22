@@ -2,14 +2,15 @@
 
 #import <Cordova/CDV.h>
 #import "Bluetooth.h"
-@interface tonband_plugin : CDVPlugin {
+@interface tonband_plugin : CDVPlugin <BluetoothProtocol>{
   // Member variables go here.
     Bluetooth *bluetooth;
     CDVPluginResult* pluginResult;
 }
-
+-(void)startService;
 -(void)checkBluetooth:(CDVInvokedUrlCommand*)command;
 -(void)scan:(CDVInvokedUrlCommand*)command;
+-(void)connect:(CDVInvokedUrlCommand*)command;
 
 @property (nonatomic, strong) NSString* myCallbackId;
 
@@ -17,6 +18,13 @@
 
 @implementation tonband_plugin
 
+-(void)startService
+{
+    NSLog(@"::::::::: startService ::::::::::");
+    bluetooth = [[Bluetooth alloc] init];
+    bluetooth.delegate = self;
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(broadcastReceiver:) name:@"tonband_channel" object:nil];
+}
 
 -(void)checkBluetooth:(CDVInvokedUrlCommand*)command
 {
@@ -25,10 +33,13 @@
     [pluginResult setKeepCallbackAsBool:YES];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:self.myCallbackId];
     NSLog(@":::::: checkBluetooth ::::::");
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(broadcastReceiver:) name:@"tonband_channel" object:nil];
-    bluetooth = [[Bluetooth alloc] init];
+    [self startService];
 }
-
+-(void)connect:(CDVInvokedUrlCommand*)command
+{
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
 -(void)scan:(CDVInvokedUrlCommand*)command
 {
     self.myCallbackId = command.callbackId;
@@ -40,11 +51,15 @@
     }];
 }
 
+
 -(void)startLoop:(CDVInvokedUrlCommand*)command
 {
-    [self.commandDelegate runInBackground:^{
+//    [self.commandDelegate runInBackground:^{
         [bluetooth startLoop];
-    }];
+//    }];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [pluginResult setKeepCallbackAsBool:YES];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:self.myCallbackId];
 }
 
 
@@ -68,5 +83,19 @@
     return [formatter stringFromDate:currentDate];
 }
 
+
+- (NSDictionary *)onConnected: (NSDictionary *) device {
+    NSLog(@"onConnected: name: %@, uuid: %@", device[@"name"], device[@"uuid"]);
+    return device;
+}
+
+- (NSDictionary *)onDataChanged {
+    NSLog(@"onDataChanged");
+}
+
+- (NSDictionary *)onScannedDevices: (NSDictionary *) device {
+    NSLog(@"onScannedDevices: name: %@, uuid: %@", device[@"name"], device[@"uuid"]);
+    return device;
+}
 
 @end
