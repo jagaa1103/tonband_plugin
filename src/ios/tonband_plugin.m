@@ -33,7 +33,6 @@
     [pluginResult setKeepCallbackAsBool:YES];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:self.myCallbackId];
     NSLog(@":::::: checkBluetooth ::::::");
-    [self startService];
 }
 -(void)connect:(CDVInvokedUrlCommand*)command
 {
