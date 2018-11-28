@@ -14,6 +14,13 @@ NSString *TX_CHARACTERISTIC = @"0783B03E-8535-B5A0-7140-A304D2495CB8";
 NSString *RX_CHARACTERISTIC = @"0783B03E-8535-B5A0-7140-A304D2495CBA";
 
 uint8_t TEMPERATURE_REQ[] = {0xF7, 0x01, 0x01, 0x00, 0xF9};
+uint8_t Temperature_CFM_HEADER = 16;
+uint8_t BatteryStatus_CFM_HEADER = 32;
+uint8_t AlarmTemperature_IND_HEADER = 48;
+uint8_t AlarmTemperature_RES_HEADER = 3;
+uint8_t AlarmBattery_IND_HEADER = 64;
+uint8_t AlarmBattery_RES_HEADER = 4;
+uint8_t AlarmTemperature_CFM_HEADER = 80;
 
 CBCentralManager *centralManager = nil;
 NSMutableArray<CBPeripheral *> *devices = nil;
@@ -78,21 +85,72 @@ NSTimer *timer = nil;
     timer = [NSTimer scheduledTimerWithTimeInterval:10.0f target:self selector:@selector(sendRequestTemp) userInfo:nil repeats:YES];
 }
 
--(void) parseHeader :(uint8_t[]) data :(NSInteger) length
+-(void) parseData :(uint8_t[]) data :(NSInteger) length
 {
+    NSString *header = nil;
+    int message = 0;
     
-    for(int i = 0; i < length; i++){
-        if(i == 0 && data[i] != 247) return;
-        if(i == 1) {
-            switch (data[i]) {
-                case 16:
-                    NSLog(@"Header: TEMPERATURE_CFM_HEADER");
-                    [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:@"TEMPERATURE_CFM_HEADER"];
-                    break;
-            }
-        }
+    int l = 0;
+    
+    if(data[0] != 247) return;
+    header = [self parseHeader:data[1]];
+    l = data[2];
+    uint8_t dataArray[l];
+    int counter = 0;
+    for(int i=3; i<(l+3); i++){
+        dataArray[counter] = data[i];
+        counter ++;
     }
+    message = [self parseBody:header :dataArray :l];
+    if(header == nil || message == 0) return;
+    NSString *messageString = [NSString stringWithFormat:@"%d", message];
+    NSDictionary *dic = @{@"header": header, @"data": messageString};
+    [_delegate onDataChanged: dic];
 }
+
+-(NSString *) parseHeader: (uint8_t)data
+{
+    NSString *header = nil;
+    switch (data) {
+        case 16:
+            header = @"TEMPERATURE_CFM_HEADER";
+            break;
+        case 32:
+            header = @"BatteryStatus_CFM_HEADER";
+            break;
+        case 48:
+            header = @"AlarmTemperature_IND_HEADER";
+            break;
+        case 3:
+            header = @"AlarmTemperature_RES_HEADER";
+            break;
+        case 4:
+            header = @"AlarmBattery_RES_HEADER";
+            break;
+        case 64:
+            header = @"AlarmBattery_IND_HEADER";
+            break;
+        case 80:
+            header = @"AlarmTemperature_CFM_HEADER";
+            break;
+    }
+    return header;
+}
+
+-(int) parseBody: (NSString *)header :(uint8_t[]) data :(int) length
+{
+    int parsedData = 0;
+    if([header isEqualToString:@"TEMPERATURE_CFM_HEADER"]) {
+        parsedData = ((uint8_t)data[1] << 8) | ((uint8_t)data[0]);
+    }else if([header isEqualToString:@"AlarmTemperature_IND_HEADER"] || [header isEqualToString:@"AlarmTemperature_IND_HEADER"]){
+        parsedData = ((uint8_t)data[1] << 8) | ((uint8_t)data[0]);
+    }else {
+        parsedData = data[0];
+    }
+    return parsedData;
+}
+
+
 
 
 // *********************************************************************
@@ -101,8 +159,9 @@ NSTimer *timer = nil;
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error
 {
     connectedDevice = nil;
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:@"DEVICE_DISCONNECTED"];
+//    [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:@"DEVICE_DISCONNECTED"];
     NSLog(@"DEVICE_DISCONNECTED");
+    [_delegate onDisconnected];
 }
 -(void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral
 {
@@ -110,10 +169,10 @@ NSTimer *timer = nil;
     [centralManager stopScan];
     connectedDevice.delegate = self;
     [connectedDevice discoverServices:nil];
-    NSString *msg = [NSString stringWithFormat:@"%@: %@", @"DEVICE_CONNECTED", [connectedDevice.identifier UUIDString]];
     NSDictionary *dict = @{@"uuid": [connectedDevice.identifier UUIDString], @"name": connectedDevice.name};
     [_delegate onConnected: dict];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:msg];
+//    NSString *msg = [NSString stringWithFormat:@"%@: %@", @"DEVICE_CONNECTED", [connectedDevice.identifier UUIDString]];
+//    [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:msg];
 }
 - (void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)RSSI
 {
@@ -155,7 +214,7 @@ CBCharacteristic *txCharacteristic = nil;
     uint8_t *uints = (uint8_t*)[characteristic.value bytes];
     NSUInteger len = [characteristic.value length]/sizeof(uint8_t);
     memcpy(uints, [characteristic.value bytes], len);
-    [self parseHeader:uints :len];
+    [self parseData:uints :len];
 }
 
 

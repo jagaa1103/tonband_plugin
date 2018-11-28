@@ -12,17 +12,60 @@ import org.json.JSONObject;
  */
 public class tonband_plugin extends CordovaPlugin {
 
+
+
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
         if (action.equals("coolMethod")) {
             String message = args.getString(0);
             this.coolMethod(message, callbackContext);
             return true;
+        } else if(action.equals("startService")){
+            this.startService(message, callbackContext);
+            return true;
+        } else if(action.equals("scan")){
+            this.scan(message, callbackContext);
+            return true;
+        } else if(action.equals("connect")){
+            this.connect(message, args, callbackContext);
+            return true;
+        } else if(action.equals("startLoop")){
+            this.startLoop(message, callbackContext);
+            return true;
         }
         return false;
     }
 
     private void coolMethod(String message, CallbackContext callbackContext) {
+        if (message != null && message.length() > 0) {
+            callbackContext.success(message);
+        } else {
+            callbackContext.error("Expected one non-empty string argument.");
+        }
+    }
+
+    private void startService(String message, CallbackContext callbackContext) {
+        if (message != null && message.length() > 0) {
+            callbackContext.success(message);
+        } else {
+            callbackContext.error("Expected one non-empty string argument.");
+        }
+    }
+    private void scan(String message, CallbackContext callbackContext) {
+        if (message != null && message.length() > 0) {
+            callbackContext.success(message);
+        } else {
+            callbackContext.error("Expected one non-empty string argument.");
+        }
+    }
+    private void connect(String message, JSONArray args, CallbackContext callbackContext) {
+        if (message != null && message.length() > 0) {
+            callbackContext.success(message);
+        } else {
+            callbackContext.error("Expected one non-empty string argument.");
+        }
+    }
+    private void startLoop(String message, CallbackContext callbackContext) {
         if (message != null && message.length() > 0) {
             callbackContext.success(message);
         } else {
