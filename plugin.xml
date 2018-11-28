@@ -13,8 +13,8 @@
             </feature>
         </config-file>
         <config-file parent="/*" target="AndroidManifest.xml" />
-        <source-file src="src/android/tonband_plugin.java" target-dir="src/cordova-plugin-tonband/tonband_plugin" />
-        <source-file src="src/android/BluetoothService.java" target-dir="src/cordova-plugin-tonband/tonband_plugin" />
+        <source-file src="src/android/tonband_plugin.java" target-dir="src/cordova.plugin.tonband/tonband_plugin" />
+        <source-file src="src/android/BluetoothService.java" target-dir="src/cordova.plugin.tonband/tonband_plugin" />
     </platform>
     <platform name="ios">
         <config-file parent="/*" target="config.xml">
