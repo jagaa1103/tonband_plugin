@@ -18,8 +18,8 @@
     </platform>
     <platform name="ios">
         <config-file parent="/*" target="config.xml">
-            <feature name="tonband_plugin">
-                <param name="ios-package" value="tonband_plugin" />
+            <feature name="TonbandPlugin">
+                <param name="ios-package" value="TonbandPlugin" />
             </feature>
         </config-file>
         <source-file src="src/ios/tonband_plugin.m" />

@@ -2,7 +2,7 @@
 
 #import <Cordova/CDV.h>
 #import "Bluetooth.h"
-@interface tonband_plugin : CDVPlugin <BluetoothProtocol>{
+@interface TonbandPlugin : CDVPlugin <BluetoothProtocol>{
   // Member variables go here.
     Bluetooth *bluetooth;
     CDVPluginResult* pluginResult;
@@ -18,7 +18,7 @@
 
 @end
 
-@implementation tonband_plugin
+@implementation TonbandPlugin
 
 -(void)startService:(CDVInvokedUrlCommand*)command
 {

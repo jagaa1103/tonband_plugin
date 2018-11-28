@@ -31,9 +31,13 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static android.support.v4.app.NotificationCompat.PRIORITY_MIN;
 
@@ -90,7 +94,7 @@ public class BluetoothService extends Service {
             // Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID).setCategory(Notification.CATEGORY_SERVICE).setSmallIcon(R.drawable.ic_launcher_background).setPriority(PRIORITY_MIN).build();
             // startForeground(102, notification);
         // }
-        initService();
+//        initService();
     }
 
     @Override
@@ -112,19 +116,18 @@ public class BluetoothService extends Service {
         return null;
     }
 
-    public void initService(){
+    public void initService(Context context){
         Log.d(TAG, "initService");
+        mContext = context;
         if(isStartedService) return;
         instance = this;
-        sendBroadcast("START_SERVICE");
-        mContext = getApplicationContext();
         bluetoothManager = (BluetoothManager) mContext.getSystemService(mContext.BLUETOOTH_SERVICE);
         adapter = null;
         adapter = bluetoothManager.getAdapter();
+        checkPermission();
     }
 
     public boolean checkPermission(){
-        if(mContext == null) initService();
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
             if(mContext.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED){
                 return true;
@@ -137,9 +140,6 @@ public class BluetoothService extends Service {
     }
 
     public void startScanning(){
-        if(adapter == null) {
-            initService();
-        }
         Log.d(TAG, "startScanning..");
         deviceList.clear();
         mScanner = adapter.getBluetoothLeScanner();
@@ -157,13 +157,25 @@ public class BluetoothService extends Service {
             if(deviceList.size() > 0){
                 if(!deviceList.contains(scannedDevice)) {
                     deviceList.add(scannedDevice);
-                    sendBroadcast("NEW_DEVICE_SCANNED");
-                    stopScanning();
+                    JSONObject jsonObject = new JSONObject();
+                    try{
+                        jsonObject.put("name", scannedDevice.getName());
+                        jsonObject.put("uuid", scannedDevice.getAddress());
+                        sendBroadcast("onScannedDevices", jsonObject);
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }
                 }
             }else{
                 deviceList.add(scannedDevice);
-                sendBroadcast("NEW_DEVICE_SCANNED");
-                stopScanning();
+                JSONObject jsonObject = new JSONObject();
+                try{
+                    jsonObject.put("name", scannedDevice.getName());
+                    jsonObject.put("uuid", scannedDevice.getAddress());
+                    sendBroadcast("onScannedDevices", jsonObject);
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
             }
         }
         @Override
@@ -179,18 +191,24 @@ public class BluetoothService extends Service {
     public void stopScanning(){
         try{
             if(mScanner != null) mScanner.stopScan(myScanCallback);
-            if(deviceList.size() > 0){
-                BluetoothDevice device = deviceList.get(0);
-                gatt = device.connectGatt(mContext, false, new GattCallback());
-            }
+//            if(deviceList.size() > 0){
+//                BluetoothDevice device = deviceList.get(0);
+//                gatt = device.connectGatt(mContext, false, new GattCallback());
+//            }
+            deviceList.clear();
         }catch(Exception e){
             e.printStackTrace();
         }
     }
 
-    protected void sendBroadcast(String state){
+    protected void sendBroadcast(String state, JSONObject data){
         Intent i = new Intent("tonband_channel");
         i.putExtra("state", state);
+        if(data != null) {
+            i.putExtra("data", data.toString());
+        }else{
+            i.putExtra("data", "");
+        }
         LocalBroadcastManager.getInstance(this).sendBroadcast(i);
     }
     class GattCallback extends BluetoothGattCallback {
@@ -204,14 +222,13 @@ public class BluetoothService extends Service {
             switch (newState){
                 case BluetoothGatt.STATE_CONNECTED:
                     gatt.discoverServices();
-                    String msg = "DEVICE_CONNECTED >> " + gatt.getDevice().getAddress();
-                    sendBroadcast(msg);
+                    sendBroadcast("onConnected", null);
+                    stopScanning();
                     break;
                 case BluetoothGatt.STATE_CONNECTING:
-                    sendBroadcast("DEVICE_CONNECTING");
                     break;
                 case BluetoothGatt.STATE_DISCONNECTED:
-                    sendBroadcast("DEVICE_DISCONNECTED");
+                    sendBroadcast("onDisconnected", null);
                     break;
             }
         }
@@ -253,12 +270,18 @@ public class BluetoothService extends Service {
                 dataString += String.format("%02X", bytes[i]);
             }
             Log.d(TAG, "received bytes: " + dataString);
-            bufferDataFromDevice(bytes);
+            parseData(bytes);
         }
     }
 
-    public void connectDevice(){
-        startScanning();
+    public void connectDevice(String uuid){
+        for(BluetoothDevice device : deviceList){
+            if(device.getAddress().equals(uuid)) {
+                gatt = device.connectGatt(mContext, false, new GattCallback());
+                break;
+            }
+        }
+
     }
 
     protected boolean sendToCharacteristics(byte[] data){
@@ -271,18 +294,30 @@ public class BluetoothService extends Service {
         return false;
     }
 
-    public void bufferDataFromDevice(byte[] data) {
-        try {
-            if(data[0] != (byte) 0xF7){
-                return;
-            }
-            String header = parseHeader(data[1]);
-            int command_length = (int) data[2];
-            Log.d(TAG, "parseHeader : " + header + ", command_length: " + command_length);
-            sendBroadcast(header);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public void parseData(byte[] data) {
+                if(data[0] != (byte) 0xF7) return;
+                try {
+                    String header = parseHeader(data[1]);
+                    int l = (int) data[2];
+                    byte[] dataArray = new byte[l];
+                    int counter = 0;
+                    for(int i=3; i<(l+3); i++){
+                        dataArray[counter] = data[i];
+                        counter ++;
+                    }
+                    int message = parseBody(header, dataArray);
+                    if(header == "" || message == 0) return;
+                    JSONObject jsonObject = new JSONObject();
+                    try{
+                        jsonObject.put("header", header);
+                        jsonObject.put("data", message);
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }
+                    sendBroadcast(header, jsonObject);
+                }catch(Exception e) {
+                    e.printStackTrace();
+                }
     }
 
     public String parseHeader(byte data){
@@ -307,7 +342,33 @@ public class BluetoothService extends Service {
         return header;
     }
 
+    public int parseBody(String header, byte[] data){
+        Log.d("Bluetooth", "@>> byte: " + data);
+        int message2 = 0;
+        if(header.equals("TEMPERATURE_CFM_HEADER")){
+            int message = 0;
+            message =  message | data[1];
+            message = message << 8;
+            message = message | (byte)(0x00000000 & data[0]);
+            return message;
+        }
+        return message2;
+    }
+
     public boolean sendTemperatureReq(){
         return sendToCharacteristics(TEMPERATURE_REQ);
+    }
+
+
+    Timer timer = null;
+    public void startLoop(){
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                sendTemperatureReq();
+            }
+        };
+        timer = new Timer();
+        timer.schedule(task, 0, 10000);
     }
 }
