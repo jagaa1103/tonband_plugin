@@ -31,13 +31,24 @@ public class TonbandPlugin extends CordovaPlugin {
     CordovaInterface _cordova = null;
     static TonbandPlugin instance = null;
 
+    Intent intentBluetooth = null;
+
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
         _cordova = cordova;
-        Intent intent = new Intent(_cordova.getActivity().getApplicationContext(), BluetoothService.class);
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) _cordova.getActivity().startForegroundService(intent);
-        else _cordova.getActivity().startService(intent);
+        intentBluetooth = new Intent(_cordova.getActivity().getApplicationContext(), BluetoothService.class);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) _cordova.getActivity().startForegroundService(intentBluetooth);
+        else _cordova.getActivity().startService(intentBluetooth);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        try{
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) _cordova.getActivity().startForegroundService(intentBluetooth);
+            else _cordova.getActivity().stopService(intentBluetooth);
+        }catch(Exception e) { e.printStackTrace(); }
     }
 
     @Override
@@ -65,7 +76,6 @@ public class TonbandPlugin extends CordovaPlugin {
             resetSettings(callbackContext, message);
             return true;
         }
-
         return false;
     }
 

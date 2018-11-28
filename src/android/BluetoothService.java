@@ -380,6 +380,7 @@ public class BluetoothService extends Service {
             return;
         }else {
             timer.cancel();
+            timer = null;
             int t = Integer.parseInt(time) * 60000;
             startLoop(t);
         }

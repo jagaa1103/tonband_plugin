@@ -29,5 +29,4 @@
         <source-file src="src/ios/Bluetooth.h" />
         <source-file src="src/ios/Bluetooth.m" />
     </platform>
-    
 </plugin>
