@@ -20,8 +20,8 @@ exports.connect = function(deviceID, success, error){
     exec(success, error, 'TonbandPlugin', 'connect', [deviceID]);
 }
 
-exports.startLoop = function(success, error){
-    exec(success, error, 'TonbandPlugin', 'startLoop');
+exports.startLoop = function(time, success, error){
+    exec(success, error, 'TonbandPlugin', 'startLoop', [time]);
 }
 
 exports.resetSettings = function(time, success, error){

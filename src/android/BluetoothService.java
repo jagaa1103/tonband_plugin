@@ -361,7 +361,7 @@ public class BluetoothService extends Service {
 
 
     Timer timer = null;
-    public void startLoop(){
+    public void startLoop(int time){
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
@@ -369,6 +369,13 @@ public class BluetoothService extends Service {
             }
         };
         timer = new Timer();
-        timer.schedule(task, 0, 10000);
+        timer.schedule(task, 0, time);
+    }
+
+    public void resetTimer(String time){
+        if(timer == null) return;
+        timer.cancel();
+        int t = Integer.parseInt(time) * 1000;
+        startLoop(t);
     }
 }

@@ -53,9 +53,15 @@ public class TonbandPlugin extends CordovaPlugin {
             this.connect(message, args, callbackContext);
             return true;
         } else if(action.equals("startLoop")){
-            this.startLoop(callbackContext);
+            String message = args.getString(0);
+            this.startLoop(callbackContext, message);
+            return true;
+        } else if(action.equals("resetSettings")){
+            String message = args.getString(0);
+            resetSettings(callbackContext, message);
             return true;
         }
+
         return false;
     }
 
@@ -92,12 +98,18 @@ public class TonbandPlugin extends CordovaPlugin {
         connectionCallback.sendPluginResult(result);
     }
 
-    private void startLoop(CallbackContext callbackContext) {
+    private void startLoop(CallbackContext callbackContext, String time) {
         dataCallback = callbackContext;
-        bluetoothService.startLoop();
+        bluetoothService.sendTemperatureReq();
+        bluetoothService.resetTimer(time);
         PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
         result.setKeepCallback(true);
         dataCallback.sendPluginResult(result);
+    }
+
+    private void resetSettings(CallbackContext callbackContext, String time) {
+        bluetoothService.resetTimer(time);
+        callbackContext.success();
     }
 
     public void onScannedDevices(String device){
