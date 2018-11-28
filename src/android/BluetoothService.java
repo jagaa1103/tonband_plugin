@@ -81,15 +81,15 @@ public class BluetoothService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        if (Build.VERSION.SDK_INT >= 26) {
-            String CHANNEL_ID = "bluetooth_service";
-            String CHANNEL_NAME = "BluetoothService";
+        // if (Build.VERSION.SDK_INT >= 26) {
+        //     String CHANNEL_ID = "bluetooth_service";
+        //     String CHANNEL_NAME = "BluetoothService";
 
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
-            ((NotificationManager) getSystemService(this.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
-            Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID).setCategory(Notification.CATEGORY_SERVICE).setSmallIcon(R.drawable.ic_launcher_background).setPriority(PRIORITY_MIN).build();
-            startForeground(102, notification);
-        }
+            // NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+            // ((NotificationManager) getSystemService(this.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+            // Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID).setCategory(Notification.CATEGORY_SERVICE).setSmallIcon(R.drawable.ic_launcher_background).setPriority(PRIORITY_MIN).build();
+            // startForeground(102, notification);
+        // }
         initService();
     }
 
