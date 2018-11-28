@@ -9,7 +9,7 @@
     <platform name="android">
         <config-file parent="/*" target="res/xml/config.xml">
             <feature name="tonband_plugin">
-                <param name="android-package" value="cordova-plugin-tonband.tonband_plugin" />
+                <param name="android-package" value="cordova.plugin.tonband.tonband_plugin" />
             </feature>
         </config-file>
         <config-file parent="/*" target="AndroidManifest.xml" />
