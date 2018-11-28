@@ -22,7 +22,7 @@
                 <param name="ios-package" value="TonbandPlugin" />
             </feature>
         </config-file>
-        <source-file src="src/ios/tonband_plugin.m" />
+        <source-file src="src/ios/TonbandPlugin.m" />
         <source-file src="src/ios/Bluetooth.h" />
         <source-file src="src/ios/Bluetooth.m" />
     </platform>
