@@ -10,7 +10,7 @@ import org.json.JSONObject;
 /**
  * This class echoes a string called from JavaScript.
  */
-public class TonBand extends CordovaPlugin {
+public class tonband_plugin extends CordovaPlugin {
 
 
 
