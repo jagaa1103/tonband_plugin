@@ -12,6 +12,9 @@
                 <param name="android-package" value="cordova.plugin.tonband.TonbandPlugin" />
             </feature>
         </config-file>
+        <config-file target="AndroidManifest.xml" parent="/manifest/application">
+            <service android:name="cordova.plugin.tonband.BluetoothService" />
+        </config-file>
         <config-file parent="/*" target="AndroidManifest.xml" />
         <source-file src="src/android/TonbandPlugin.java" target-dir="src/cordova.plugin.tonband" />
         <source-file src="src/android/BluetoothService.java" target-dir="src/cordova.plugin.tonband" />
