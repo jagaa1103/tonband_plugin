@@ -31,6 +31,8 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.haesung.tonband.R;
+
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -85,16 +87,16 @@ public class BluetoothService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        // if (Build.VERSION.SDK_INT >= 26) {
-        //     String CHANNEL_ID = "bluetooth_service";
-        //     String CHANNEL_NAME = "BluetoothService";
+        instance = this;
+         if (Build.VERSION.SDK_INT >= 26) {
+             String CHANNEL_ID = "bluetooth_service";
+             String CHANNEL_NAME = "BluetoothService";
 
-            // NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
-            // ((NotificationManager) getSystemService(this.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
-            // Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID).setCategory(Notification.CATEGORY_SERVICE).setSmallIcon(R.drawable.ic_launcher_background).setPriority(PRIORITY_MIN).build();
-            // startForeground(102, notification);
-        // }
-//        initService();
+             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+             ((NotificationManager) getSystemService(this.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+             Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID).setCategory(Notification.CATEGORY_SERVICE).setSmallIcon(R.drawable.screen).setPriority(PRIORITY_MIN).build();
+             startForeground(102, notification);
+         }
     }
 
     @Override
@@ -120,7 +122,6 @@ public class BluetoothService extends Service {
         Log.d(TAG, "initService");
         mContext = context;
         if(isStartedService) return;
-        instance = this;
         bluetoothManager = (BluetoothManager) mContext.getSystemService(mContext.BLUETOOTH_SERVICE);
         adapter = null;
         adapter = bluetoothManager.getAdapter();
@@ -373,9 +374,14 @@ public class BluetoothService extends Service {
     }
 
     public void resetTimer(String time){
-        if(timer == null) return;
-        timer.cancel();
-        int t = Integer.parseInt(time) * 1000;
-        startLoop(t);
+        if(timer == null) {
+            int t = Integer.parseInt(time) * 60000;
+            startLoop(t);
+            return;
+        }else {
+            timer.cancel();
+            int t = Integer.parseInt(time) * 60000;
+            startLoop(t);
+        }
     }
 }

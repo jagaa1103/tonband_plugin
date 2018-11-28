@@ -1,6 +1,7 @@
 package cordova.plugin.tonband;
 
 import android.Manifest;
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -34,6 +35,9 @@ public class TonbandPlugin extends CordovaPlugin {
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
         _cordova = cordova;
+        Intent intent = new Intent(_cordova.getActivity().getApplicationContext(), BluetoothService.class);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) _cordova.getActivity().startForegroundService(intent);
+        else _cordova.getActivity().startService(intent);
     }
 
     @Override
@@ -73,26 +77,25 @@ public class TonbandPlugin extends CordovaPlugin {
         }
     }
 
-    BluetoothService bluetoothService = new BluetoothService();
     private void startService(CallbackContext callbackContext) {
         Log.d("TonbandPlugin", "@>> TonbandPlugin >> startService");
         LocalBroadcastManager.getInstance(_cordova.getActivity().getApplicationContext()).registerReceiver(serviceBroadcastReceiver, new IntentFilter("tonband_channel"));
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) _cordova.getActivity().requestPermissions(new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
-        bluetoothService.initService(_cordova.getActivity().getApplication().getApplicationContext());
+        BluetoothService.getInstance().initService(_cordova.getActivity().getApplication().getApplicationContext());
         callbackContext.success();
     }
 
     private void scan(CallbackContext callbackContext) {
         Log.d("TonbandPlugin", "@>> TonbandPlugin >> scan");
         scanCallback = callbackContext;
-        bluetoothService.startScanning();
+        BluetoothService.getInstance().startScanning();
         PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
         result.setKeepCallback(true);
         scanCallback.sendPluginResult(result);
     }
     private void connect(String message, JSONArray args, CallbackContext callbackContext) {
         connectionCallback = callbackContext;
-        bluetoothService.connectDevice(message);
+        BluetoothService.getInstance().connectDevice(message);
         PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
         result.setKeepCallback(true);
         connectionCallback.sendPluginResult(result);
@@ -100,15 +103,15 @@ public class TonbandPlugin extends CordovaPlugin {
 
     private void startLoop(CallbackContext callbackContext, String time) {
         dataCallback = callbackContext;
-        bluetoothService.sendTemperatureReq();
-        bluetoothService.resetTimer(time);
+        BluetoothService.getInstance().sendTemperatureReq();
+        BluetoothService.getInstance().resetTimer(time);
         PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
         result.setKeepCallback(true);
         dataCallback.sendPluginResult(result);
     }
 
     private void resetSettings(CallbackContext callbackContext, String time) {
-        bluetoothService.resetTimer(time);
+        BluetoothService.getInstance().resetTimer(time);
         callbackContext.success();
     }
 
