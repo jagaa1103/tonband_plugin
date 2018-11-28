@@ -9,12 +9,12 @@
     <platform name="android">
         <config-file parent="/*" target="res/xml/config.xml">
             <feature name="tonband_plugin">
-                <param name="android-package" value="cordova.plugin.tonband.tonband_plugin" />
+                <param name="android-package" value="cordova.plugin.tonband" />
             </feature>
         </config-file>
         <config-file parent="/*" target="AndroidManifest.xml" />
-        <source-file src="src/android/tonband_plugin.java" target-dir="src/cordova.plugin.tonband/tonband_plugin" />
-        <source-file src="src/android/BluetoothService.java" target-dir="src/cordova.plugin.tonband/tonband_plugin" />
+        <source-file src="src/android/tonband_plugin.java" target-dir="src/cordova.plugin.tonband" />
+        <source-file src="src/android/BluetoothService.java" target-dir="src/cordova.plugin.tonband" />
     </platform>
     <platform name="ios">
         <config-file parent="/*" target="config.xml">

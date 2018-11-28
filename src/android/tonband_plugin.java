@@ -1,4 +1,4 @@
-package cordova-plugin-tonband;
+package cordova.plugin.tonband;
 
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;
@@ -21,16 +21,19 @@ public class tonband_plugin extends CordovaPlugin {
             this.coolMethod(message, callbackContext);
             return true;
         } else if(action.equals("startService")){
+            String message = args.getString(0);
             this.startService(message, callbackContext);
             return true;
         } else if(action.equals("scan")){
+            String message = args.getString(0);
             this.scan(message, callbackContext);
             return true;
         } else if(action.equals("connect")){
+            String message = args.getString(0);
             this.connect(message, args, callbackContext);
             return true;
         } else if(action.equals("startLoop")){
-            this.startLoop(message, callbackContext);
+            this.startLoop(callbackContext);
             return true;
         }
         return false;
@@ -65,11 +68,7 @@ public class tonband_plugin extends CordovaPlugin {
             callbackContext.error("Expected one non-empty string argument.");
         }
     }
-    private void startLoop(String message, CallbackContext callbackContext) {
-        if (message != null && message.length() > 0) {
-            callbackContext.success(message);
-        } else {
-            callbackContext.error("Expected one non-empty string argument.");
-        }
+    private void startLoop(CallbackContext callbackContext) {
+        callbackContext.success("Hello");
     }
 }

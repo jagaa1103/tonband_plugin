@@ -1,4 +1,4 @@
-package tonbandtestapp.phigolf.com.tonbandbackground;
+package cordova.plugin.tonband;
 
 import android.Manifest;
 import android.app.Notification;
