@@ -53,55 +53,80 @@ public class TonbandPlugin extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        if (action.equals("coolMethod")) {
-            String message = args.getString(0);
-            this.coolMethod(message, callbackContext);
+        if(action.equals("startService")){
+            try{
+                this.startService(callbackContext);
+            }catch(Exception e){
+                e.printStackTrace();
+            }
             return true;
-        } else if(action.equals("startService")){
-            this.startService(callbackContext);
+        } else if(action.equals("startScan")) {
+            try {
+                this.startScan(callbackContext);
+            } catch (Exception e) {
+                e.printStackTrace();
+                callbackContext.error("startScan error");
+            }
             return true;
-        } else if(action.equals("scan")){
-            this.scan(callbackContext);
-            return true;
+        } else if(action.equals("stopScan")){
+            try{
+                this.stopScan(callbackContext);
+            }catch(Exception e){
+                e.printStackTrace();
+                callbackContext.error("stopScan error");
+            }
         } else if(action.equals("connect")){
-            String message = args.getString(0);
-            this.connect(message, args, callbackContext);
+            try{
+                String message = args.getString(0);
+                this.connect(message, args, callbackContext);
+            }catch(Exception e) {
+                e.printStackTrace();
+                callbackContext.error("connect error");
+            }
             return true;
         } else if(action.equals("startLoop")){
-            String message = args.getString(0);
-            this.startLoop(callbackContext, message);
+            try{
+                String message = args.getString(0);
+                this.startLoop(callbackContext, message);
+            }catch(Exception e){
+                e.printStackTrace();
+                callbackContext.error("startLoop error");
+            }
             return true;
         } else if(action.equals("resetSettings")){
-            String message = args.getString(0);
-            resetSettings(callbackContext, message);
+            try{
+                String message = args.getString(0);
+                resetSettings(callbackContext, message);
+            }catch(Exception e){
+                e.printStackTrace();
+                callbackContext.error("resetSettings error");
+            }
             return true;
         }
         return false;
     }
 
-    private void coolMethod(String message, CallbackContext callbackContext) {
-        if (message != null && message.length() > 0) {
-            callbackContext.success(message);
-        } else {
-            callbackContext.error("Expected one non-empty string argument.");
-        }
-    }
-
     private void startService(CallbackContext callbackContext) {
         Log.d("TonbandPlugin", "@>> TonbandPlugin >> startService");
-        LocalBroadcastManager.getInstance(_cordova.getActivity().getApplicationContext()).registerReceiver(serviceBroadcastReceiver, new IntentFilter("tonband_channel"));
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) _cordova.getActivity().requestPermissions(new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
-        BluetoothService.getInstance().initService(_cordova.getActivity().getApplication().getApplicationContext());
-        callbackContext.success();
+            LocalBroadcastManager.getInstance(_cordova.getActivity().getApplicationContext()).registerReceiver(serviceBroadcastReceiver, new IntentFilter("tonband_channel"));
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) _cordova.getActivity().requestPermissions(new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+            BluetoothService.getInstance().initService(_cordova.getActivity().getApplication().getApplicationContext());
+            callbackContext.success();
     }
 
-    private void scan(CallbackContext callbackContext) {
-        Log.d("TonbandPlugin", "@>> TonbandPlugin >> scan");
+    private void startScan(CallbackContext callbackContext) {
+        Log.d("TonbandPlugin", "@>> TonbandPlugin >> startScan");
         scanCallback = callbackContext;
         BluetoothService.getInstance().startScanning();
         PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
         result.setKeepCallback(true);
         scanCallback.sendPluginResult(result);
+    }
+
+    private  void stopScan(CallbackContext callbackContext){
+        Log.d("TonbandPlugin", "@>> TonbandPlugin >> stopScan");
+        BluetoothService.getInstance().stopScanning();
+        callbackContext.success();
     }
     private void connect(String message, JSONArray args, CallbackContext callbackContext) {
         connectionCallback = callbackContext;

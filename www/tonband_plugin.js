@@ -12,8 +12,11 @@ exports.startService = function(success, error){
     exec(success, error, 'TonbandPlugin', 'startService');
 }
 
-exports.scan = function(success, error){
-    exec(success, error, 'TonbandPlugin', 'scan');
+exports.startScan = function(success, error){
+    exec(success, error, 'TonbandPlugin', 'startScan');
+}
+exports.stopScan = function(success, error){
+    exec(success, error, 'TonbandPlugin', 'stopScan');
 }
 
 exports.connect = function(deviceID, success, error){
