@@ -150,8 +150,7 @@ public class TonbandPlugin extends CordovaPlugin {
     }
 
     private void setAlarmTemperature(String temp){
-        byte[] temperature = temp.getBytes();
-        BluetoothService.getInstance().setAlarmTemperature(temperature);
+        BluetoothService.getInstance().setAlarmTemperature(temp);
     }
 
     private void requestBattery(){
@@ -177,6 +176,8 @@ public class TonbandPlugin extends CordovaPlugin {
         result.setKeepCallback(true);
         dataCallback.sendPluginResult(result);
     }
+
+
 
     private BroadcastReceiver serviceBroadcastReceiver = new BroadcastReceiver(){
         @Override

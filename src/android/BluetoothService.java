@@ -387,7 +387,8 @@ public class BluetoothService extends Service {
         }
     }
 
-    public void setAlarmTemperature(byte[] data){
+    public void setAlarmTemperature(String hexString){
+        byte[] data = hexStringToByteArray(hexString);
         byte[] hex_array = new byte[6];
         hex_array[0] = (byte)0xF7;
         hex_array[1] = (byte)0x05;
@@ -395,11 +396,14 @@ public class BluetoothService extends Service {
         hex_array[3] = data[1];
         hex_array[4] = data[0];
         byte checkSum = 0;
-        for(byte b : hex_array){
-//            checkSum += (0xff & b);
-            checkSum += b;
-        }
-        hex_array[5] = checkSum;
+        Checksum check = new CRC32();
+        check.update(hex_array, 0, 5);
+//        for(byte b : hex_array){
+////            checkSum += (0xff & b);
+//            checkSum += b;
+//        }
+        byte checksum = (byte)(hex_array[0] + hex_array[1] + hex_array[2] + hex_array[3] + hex_array[4]);
+        hex_array[5] = checksum;
         sendToCharacteristics(hex_array);
     }
 
@@ -410,5 +414,17 @@ public class BluetoothService extends Service {
         }catch(Exception e){
             e.printStackTrace();
         }
+    }
+
+
+    public static byte[] hexStringToByteArray(String s) {
+        int len = s.length();
+        byte[] data = new byte[len/2];
+
+        for(int i = 0; i < len; i+=2){
+            data[i/2] = (byte) ((Character.digit(s.charAt(i), 16) << 4) + Character.digit(s.charAt(i+1), 16));
+        }
+
+        return data;
     }
 }
