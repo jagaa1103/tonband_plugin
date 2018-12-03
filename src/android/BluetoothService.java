@@ -40,6 +40,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
 
 import static android.support.v4.app.NotificationCompat.PRIORITY_MIN;
 
@@ -51,14 +53,8 @@ public class BluetoothService extends Service {
 
     Boolean isStartedService = false;
 
-    int REQ_ALARM = 1;
-    int REQ_TEMP = 2;
-    int REQ_BATT = 3;
-    int RES_ALARM = 4;
-    int RES_TEMP = 5;
-    int RES_BATT = 6;
-
     byte[] TEMPERATURE_REQ = {(byte)0xF7, 0x01, 0x01, 0x00, (byte)0xF9};
+    byte[] ALARMTEMPERATURE_REQ = {(byte)0xF7, 0x05, 0x02, 0x00, 0x00, (byte)0xF9};
     byte[] BATTERY_REQ = {(byte)0xF7, 0x02, 0x01, 0x00, (byte)0xFA};
 
     public static BluetoothService instance;
@@ -156,29 +152,13 @@ public class BluetoothService extends Service {
             Log.d(TAG, "device scanned");
             final BluetoothDevice scannedDevice = adapter.getRemoteDevice(result.getDevice().getAddress());
             if(deviceList.size() > 0){
+                Boolean isNewDevice = true;
                 for(BluetoothDevice device : deviceList){
-                    if(!device.getAddress().equals(scannedDevice.getAddress())){
-                        deviceList.add(scannedDevice);
-                        JSONObject jsonObject = new JSONObject();
-                        try{
-                            jsonObject.put("name", scannedDevice.getName());
-                            jsonObject.put("uuid", scannedDevice.getAddress());
-                            sendBroadcast("onScannedDevices", jsonObject);
-                        }catch(Exception e){
-                            e.printStackTrace();
-                        }
-                    }
+                    if(device.getAddress().equals(scannedDevice.getAddress())) isNewDevice = false;
                 }
+                if(isNewDevice) addDeviceList(scannedDevice);
             }else{
-                deviceList.add(scannedDevice);
-                JSONObject jsonObject = new JSONObject();
-                try{
-                    jsonObject.put("name", scannedDevice.getName());
-                    jsonObject.put("uuid", scannedDevice.getAddress());
-                    sendBroadcast("onScannedDevices", jsonObject);
-                }catch(Exception e){
-                    e.printStackTrace();
-                }
+                addDeviceList(scannedDevice);
             }
         }
         @Override
@@ -195,6 +175,18 @@ public class BluetoothService extends Service {
         try{
             if(mScanner != null) mScanner.stopScan(myScanCallback);
             deviceList.clear();
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public void addDeviceList(BluetoothDevice device){
+        deviceList.add(device);
+        JSONObject jsonObject = new JSONObject();
+        try{
+            jsonObject.put("name", device.getName());
+            jsonObject.put("uuid", device.getAddress());
+            sendBroadcast("onScannedDevices", jsonObject);
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -382,5 +374,25 @@ public class BluetoothService extends Service {
             int t = Integer.parseInt(time) * 60000;
             startLoop(t);
         }
+    }
+
+    public void setAlarmTemperature(byte[] data){
+        byte[] hex_array = new byte[5];
+        hex_array[0] = (byte)0xF7;
+        hex_array[1] = (byte)0x05;
+        hex_array[2] = (byte)0x02;
+        hex_array[3] = data[1];
+        hex_array[4] = data[0];
+        int checkSum = 0;
+        for(byte b : hex_array){
+            checkSum += (0xff & b);
+        }
+        byte checkSumByte = (byte)checkSum;
+        hex_array[5] = checkSumByte;
+        sendToCharacteristics(hex_array);
+    }
+
+    public void requestBattery(){
+        sendToCharacteristics(BATTERY_REQ);
     }
 }

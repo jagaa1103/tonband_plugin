@@ -46,8 +46,7 @@ public class TonbandPlugin extends CordovaPlugin {
     public void onDestroy() {
         super.onDestroy();
         try{
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) _cordova.getActivity().startForegroundService(intentBluetooth);
-            else _cordova.getActivity().stopService(intentBluetooth);
+            _cordova.getActivity().stopService(intentBluetooth);
         }catch(Exception e) { e.printStackTrace(); }
     }
 
@@ -102,6 +101,13 @@ public class TonbandPlugin extends CordovaPlugin {
                 callbackContext.error("resetSettings error");
             }
             return true;
+        } else if (action.equals("setAlarmTemperature")){
+            String temp = args.getString(0);
+            this.setAlarmTemperature(temp);
+            return true;
+        } else if (action.equals("requestBattery")){
+            this.requestBattery();
+            return true;
         }
         return false;
     }
@@ -150,9 +156,20 @@ public class TonbandPlugin extends CordovaPlugin {
         callbackContext.success();
     }
 
+    private void setAlarmTemperature(String temp){
+        byte[] temperature = temp.getBytes();
+        BluetoothService.getInstance().setAlarmTemperature(temperature);
+    }
+
+    private void requestBattery(){
+        BluetoothService.getInstance().requestBattery();
+    }
+
     public void onScannedDevices(String device){
         Log.d("TonbandPlugin", "Tonband @>> onScannedDevices: " + device);
-        scanCallback.success(device);
+        PluginResult result = new PluginResult(PluginResult.Status.OK, device);
+        result.setKeepCallback(true);
+        scanCallback.sendPluginResult(result);
     }
     public void onConnect(){
         connectionCallback.success();

@@ -26,3 +26,11 @@ exports.startLoop = function(time, success, error){
 exports.resetSettings = function(time, success, error){
     exec(success, error, 'TonbandPlugin', 'resetSettings', [time]);
 }
+
+exports.setAlarmTemperature = function(temp_hex, success, error){
+    exec(success, error, 'TonbandPlugin', 'setAlarmTemperature', [temp_hex]);
+}
+
+exports.requestBattery = function(success, error){
+    exec(success, error, 'TonbandPlugin', 'requestBattery');
+}
