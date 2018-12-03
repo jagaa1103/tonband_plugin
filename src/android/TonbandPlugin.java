@@ -28,25 +28,14 @@ public class TonbandPlugin extends CordovaPlugin {
     CallbackContext scanCallback = null;
     CallbackContext connectionCallback = null;
     CallbackContext dataCallback = null;
-    CordovaInterface _cordova = null;
-    static TonbandPlugin instance = null;
 
     Intent intentBluetooth = null;
-
-    @Override
-    public void initialize(CordovaInterface cordova, CordovaWebView webView) {
-        super.initialize(cordova, webView);
-        _cordova = cordova;
-        intentBluetooth = new Intent(_cordova.getActivity().getApplicationContext(), BluetoothService.class);
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) _cordova.getActivity().startForegroundService(intentBluetooth);
-        else _cordova.getActivity().startService(intentBluetooth);
-    }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         try{
-            _cordova.getActivity().stopService(intentBluetooth);
+            this.cordova.getActivity().stopService(intentBluetooth);
         }catch(Exception e) { e.printStackTrace(); }
     }
 
@@ -93,10 +82,10 @@ public class TonbandPlugin extends CordovaPlugin {
             }
             return true;
         } else if(action.equals("resetSettings")){
-            try{
+            try {
                 String message = args.getString(0);
                 resetSettings(callbackContext, message);
-            }catch(Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
                 callbackContext.error("resetSettings error");
             }
@@ -114,10 +103,13 @@ public class TonbandPlugin extends CordovaPlugin {
 
     private void startService(CallbackContext callbackContext) {
         Log.d("TonbandPlugin", "@>> TonbandPlugin >> startService");
-            LocalBroadcastManager.getInstance(_cordova.getActivity().getApplicationContext()).registerReceiver(serviceBroadcastReceiver, new IntentFilter("tonband_channel"));
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) _cordova.getActivity().requestPermissions(new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
-            BluetoothService.getInstance().initService(_cordova.getActivity().getApplication().getApplicationContext());
-            callbackContext.success();
+        intentBluetooth = new Intent(this.cordova.getActivity().getApplicationContext(), BluetoothService.class);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) this.cordova.getActivity().startForegroundService(intentBluetooth);
+        else this.cordova.getActivity().startService(intentBluetooth);
+        LocalBroadcastManager.getInstance(this.cordova.getActivity().getApplicationContext()).registerReceiver(serviceBroadcastReceiver, new IntentFilter("tonband_channel"));
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) this.cordova.getActivity().requestPermissions(new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+        BluetoothService.getInstance().initService(this.cordova.getActivity().getApplication().getApplicationContext());
+        callbackContext.success();
     }
 
     private void startScan(CallbackContext callbackContext) {
@@ -134,6 +126,7 @@ public class TonbandPlugin extends CordovaPlugin {
         BluetoothService.getInstance().stopScanning();
         callbackContext.success();
     }
+
     private void connect(String message, JSONArray args, CallbackContext callbackContext) {
         connectionCallback = callbackContext;
         BluetoothService.getInstance().connectDevice(message);
@@ -192,7 +185,7 @@ public class TonbandPlugin extends CordovaPlugin {
             String data = intent.getStringExtra("data");
             if("REQUEST_PERMISSION".equals(state)) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                    _cordova.getActivity().requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+                    cordova.getActivity().requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
             }else if("onScannedDevices".equals(state)){
                 onScannedDevices(data);
             }else if("onConnected".equals(state)){
@@ -200,6 +193,14 @@ public class TonbandPlugin extends CordovaPlugin {
             }else if("onDisconnected".equals(state)){
                 onDisconnect("disconnected");
             }else if("TEMPERATURE_CFM_HEADER".equals(state)){
+                onDataChanged(data);
+            }else if("ALARMTEMPERATURE_CFM_HEADER".equals(state)) {
+                onDataChanged(data);
+            }else if("ALARMTEMPERATURE_IND_HEADER".equals(state)){
+                onDataChanged(data);
+            }else if("BATTERY_CFM_HEADER".equals(state)){
+                onDataChanged(data);
+            }else if("ALARMBATTERY_IND_HEADER".equals(state)){
                 onDataChanged(data);
             }
         }

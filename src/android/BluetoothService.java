@@ -118,8 +118,8 @@ public class BluetoothService extends Service {
         Log.d(TAG, "initService");
         mContext = context;
         if(isStartedService) return;
-        bluetoothManager = (BluetoothManager) mContext.getSystemService(mContext.BLUETOOTH_SERVICE);
         adapter = null;
+        bluetoothManager = (BluetoothManager) mContext.getSystemService(mContext.BLUETOOTH_SERVICE);
         adapter = bluetoothManager.getAdapter();
         checkPermission();
     }
@@ -297,7 +297,7 @@ public class BluetoothService extends Service {
                         counter ++;
                     }
                     int message = parseBody(header, dataArray);
-                    if(header == "" || message == 0) return;
+                    if(header == "" || message == -1) return;
                     JSONObject jsonObject = new JSONObject();
                     try{
                         jsonObject.put("header", header);
@@ -334,13 +334,24 @@ public class BluetoothService extends Service {
     }
 
     public int parseBody(String header, byte[] data){
+        int message2 = -1;
         Log.d("Bluetooth", "@>> byte: " + data);
-        int message2 = 0;
         if(header.equals("TEMPERATURE_CFM_HEADER")){
             int message = 0;
             message =  message | data[1];
             message = message << 8;
             message = message | (byte)(0x00000000 & data[0]);
+            return message;
+        } else if (header.equals("ALARMTEMPERATURE_CFM_HEADER")) {
+            return -1;
+        } else if (header.equals("ALARMTEMPERATURE_IND_HEADER")) {
+            int message = (int)data[0];
+            return message;
+        } else if (header.equals("BATTERY_CFM_HEADER")) {
+            int message = (int)data[0];
+            return message;
+        } else if (header.equals("ALARMBATTERY_IND_HEADER")){
+            int message = (int)data[0];
             return message;
         }
         return message2;
@@ -377,22 +388,27 @@ public class BluetoothService extends Service {
     }
 
     public void setAlarmTemperature(byte[] data){
-        byte[] hex_array = new byte[5];
+        byte[] hex_array = new byte[6];
         hex_array[0] = (byte)0xF7;
         hex_array[1] = (byte)0x05;
         hex_array[2] = (byte)0x02;
         hex_array[3] = data[1];
         hex_array[4] = data[0];
-        int checkSum = 0;
+        byte checkSum = 0;
         for(byte b : hex_array){
-            checkSum += (0xff & b);
+//            checkSum += (0xff & b);
+            checkSum += b;
         }
-        byte checkSumByte = (byte)checkSum;
-        hex_array[5] = checkSumByte;
+        hex_array[5] = checkSum;
         sendToCharacteristics(hex_array);
     }
 
     public void requestBattery(){
-        sendToCharacteristics(BATTERY_REQ);
+        try{
+            Thread.sleep(1000);
+            sendToCharacteristics(BATTERY_REQ);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
 }
