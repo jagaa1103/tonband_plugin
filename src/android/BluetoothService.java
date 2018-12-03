@@ -156,15 +156,17 @@ public class BluetoothService extends Service {
             Log.d(TAG, "device scanned");
             final BluetoothDevice scannedDevice = adapter.getRemoteDevice(result.getDevice().getAddress());
             if(deviceList.size() > 0){
-                if(!deviceList.contains(scannedDevice)) {
-                    deviceList.add(scannedDevice);
-                    JSONObject jsonObject = new JSONObject();
-                    try{
-                        jsonObject.put("name", scannedDevice.getName());
-                        jsonObject.put("uuid", scannedDevice.getAddress());
-                        sendBroadcast("onScannedDevices", jsonObject);
-                    }catch(Exception e){
-                        e.printStackTrace();
+                for(BluetoothDevice device : deviceList){
+                    if(!device.getAddress().equals(scannedDevice.getAddress())){
+                        deviceList.add(scannedDevice);
+                        JSONObject jsonObject = new JSONObject();
+                        try{
+                            jsonObject.put("name", scannedDevice.getName());
+                            jsonObject.put("uuid", scannedDevice.getAddress());
+                            sendBroadcast("onScannedDevices", jsonObject);
+                        }catch(Exception e){
+                            e.printStackTrace();
+                        }
                     }
                 }
             }else{
@@ -192,10 +194,6 @@ public class BluetoothService extends Service {
     public void stopScanning(){
         try{
             if(mScanner != null) mScanner.stopScan(myScanCallback);
-//            if(deviceList.size() > 0){
-//                BluetoothDevice device = deviceList.get(0);
-//                gatt = device.connectGatt(mContext, false, new GattCallback());
-//            }
             deviceList.clear();
         }catch(Exception e){
             e.printStackTrace();
