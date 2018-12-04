@@ -395,13 +395,6 @@ public class BluetoothService extends Service {
         hex_array[2] = (byte)0x02;
         hex_array[3] = data[1];
         hex_array[4] = data[0];
-        byte checkSum = 0;
-        Checksum check = new CRC32();
-        check.update(hex_array, 0, 5);
-//        for(byte b : hex_array){
-////            checkSum += (0xff & b);
-//            checkSum += b;
-//        }
         byte checksum = (byte)(hex_array[0] + hex_array[1] + hex_array[2] + hex_array[3] + hex_array[4]);
         hex_array[5] = checksum;
         sendToCharacteristics(hex_array);
