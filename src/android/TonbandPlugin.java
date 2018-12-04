@@ -35,15 +35,25 @@ public class TonbandPlugin extends CordovaPlugin {
     public void onDestroy() {
         super.onDestroy();
         try{
+            BluetoothService.getInstance().onDestroy();
             this.cordova.getActivity().stopService(intentBluetooth);
         }catch(Exception e) { e.printStackTrace(); }
     }
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        if(action.equals("startService")){
-            try{
+        if(action.equals("startService")) {
+            try {
                 this.startService(callbackContext);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return true;
+        } else if(action.equals("stopService")){
+            try{
+                this.cordova.getActivity().stopService(intentBluetooth);
+                BluetoothService.getInstance().onDestroy();
+                this.cordova.getActivity().stopService(intentBluetooth);
             }catch(Exception e){
                 e.printStackTrace();
             }

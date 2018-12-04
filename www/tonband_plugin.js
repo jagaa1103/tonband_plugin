@@ -8,6 +8,10 @@ exports.startService = function(success, error){
     exec(success, error, 'TonbandPlugin', 'startService');
 }
 
+exports.stopService = function(success, error){
+    exec(success, error, 'TonbandPlugin', 'stopService');
+}
+
 exports.startScan = function(success, error){
     exec(success, error, 'TonbandPlugin', 'startScan');
 }

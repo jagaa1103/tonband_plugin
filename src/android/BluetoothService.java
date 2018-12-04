@@ -80,17 +80,18 @@ public class BluetoothService extends Service {
         return instance;
     }
 
+    Notification notification = null;
     @Override
     public void onCreate() {
-        super.onCreate();
-        instance = this;
+         super.onCreate();
+         instance = this;
          if (Build.VERSION.SDK_INT >= 26) {
              String CHANNEL_ID = "bluetooth_service";
              String CHANNEL_NAME = "BluetoothService";
 
              NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
              ((NotificationManager) getSystemService(this.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
-             Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID).setCategory(Notification.CATEGORY_SERVICE).setSmallIcon(R.drawable.screen).setPriority(PRIORITY_MIN).build();
+             notification = new NotificationCompat.Builder(this, CHANNEL_ID).setCategory(Notification.CATEGORY_SERVICE).setSmallIcon(R.mipmap.icon).setPriority(PRIORITY_MIN).build();
              startForeground(102, notification);
          }
     }
@@ -106,6 +107,7 @@ public class BluetoothService extends Service {
         myScanCallback = null;
         isStartedService = false;
         instance = null;
+        if (Build.VERSION.SDK_INT >= 26) stopForeground(notification.flags);
     }
 
     @Nullable
