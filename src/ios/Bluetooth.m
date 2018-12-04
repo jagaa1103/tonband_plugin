@@ -14,6 +14,8 @@ NSString *TX_CHARACTERISTIC = @"0783B03E-8535-B5A0-7140-A304D2495CB8";
 NSString *RX_CHARACTERISTIC = @"0783B03E-8535-B5A0-7140-A304D2495CBA";
 
 uint8_t TEMPERATURE_REQ[] = {0xF7, 0x01, 0x01, 0x00, 0xF9};
+uint8_t BATTERY_REQ[] = {0xF7, 0x02, 0x01, 0x00, 0xFA};
+uint8_t ALARMTEMPERATURE_SET[] = { 0xF7, 0x05, 0x02, 0x00, 0x00, 0x00 };
 uint8_t Temperature_CFM_HEADER = 16;
 uint8_t BatteryStatus_CFM_HEADER = 32;
 uint8_t AlarmTemperature_IND_HEADER = 48;
@@ -62,6 +64,10 @@ CBPeripheral *connectedDevice = nil;
     CBUUID *serviceUUID = [CBUUID UUIDWithString:SERVICE_UUID];
     [centralManager scanForPeripheralsWithServices:@[serviceUUID] options:nil];
 }
+-(void) stopScan
+{
+    [centralManager stopScan];
+}
 
 -(Boolean) connect:(NSString *) uuid
 {
@@ -78,11 +84,41 @@ CBPeripheral *connectedDevice = nil;
     }
 }
 
+-(void) disconnect
+{
+    if(connectedDevice) [centralManager cancelPeripheralConnection:connectedDevice];
+}
+
 NSTimer *timer = nil;
--(void) startLoop
+-(void) startLoop: (NSString *) time
+{
+    float t = [time floatValue] * 60;
+    timer = [NSTimer scheduledTimerWithTimeInterval:t target:self selector:@selector(sendRequestTemp) userInfo:nil repeats:YES];
+}
+
+-(void) resetSettings:(NSString *)time
 {
     [self sendRequestTemp];
-    timer = [NSTimer scheduledTimerWithTimeInterval:10.0f target:self selector:@selector(sendRequestTemp) userInfo:nil repeats:YES];
+    if(timer != nil){
+        [timer invalidate];
+        timer = nil;
+    }
+    [self startLoop: time];
+}
+-(void) setAlarmTemperature:(NSString *)tempHex
+{
+    uint8_t *data = [self hexStringToByte:tempHex];
+    ALARMTEMPERATURE_SET[3] = data[1];
+    ALARMTEMPERATURE_SET[4] = data[0];
+    uint8_t checksum = ALARMTEMPERATURE_SET[0] + ALARMTEMPERATURE_SET[1] + ALARMTEMPERATURE_SET[2] + ALARMTEMPERATURE_SET[3] + ALARMTEMPERATURE_SET[4];
+    ALARMTEMPERATURE_SET[5] = checksum;
+    [self sendToSensor:ALARMTEMPERATURE_SET :6];
+}
+-(void) requestBattery
+{
+    [NSTimer scheduledTimerWithTimeInterval:2.0f repeats:NO block:^(NSTimer *time) {
+        [self sendToSensor:BATTERY_REQ :5];
+    }];
 }
 
 -(void) parseData :(uint8_t[]) data :(NSInteger) length
@@ -102,7 +138,8 @@ NSTimer *timer = nil;
         counter ++;
     }
     message = [self parseBody:header :dataArray :l];
-    if(header == nil || message == 0) return;
+    NSLog(@"header: %@, body: %d", header, message);
+    if(header == nil || message == -1) return;
     NSString *messageString = [NSString stringWithFormat:@"%d", message];
     NSDictionary *dic = @{@"header": header, @"data": messageString};
     [_delegate onDataChanged: dic];
@@ -116,22 +153,16 @@ NSTimer *timer = nil;
             header = @"TEMPERATURE_CFM_HEADER";
             break;
         case 32:
-            header = @"BatteryStatus_CFM_HEADER";
+            header = @"BATTERY_CFM_HEADER";
             break;
         case 48:
-            header = @"AlarmTemperature_IND_HEADER";
-            break;
-        case 3:
-            header = @"AlarmTemperature_RES_HEADER";
-            break;
-        case 4:
-            header = @"AlarmBattery_RES_HEADER";
+            header = @"ALARMTEMPERATURE_IND_HEADER";
             break;
         case 64:
-            header = @"AlarmBattery_IND_HEADER";
+            header = @"ALARMBATTERY_IND_HEADER";
             break;
         case 80:
-            header = @"AlarmTemperature_CFM_HEADER";
+            header = @"ALARMTEMPERATURE_CFM_HEADER";
             break;
     }
     return header;
@@ -139,15 +170,33 @@ NSTimer *timer = nil;
 
 -(int) parseBody: (NSString *)header :(uint8_t[]) data :(int) length
 {
-    int parsedData = 0;
+    int parsedData = -1;
     if([header isEqualToString:@"TEMPERATURE_CFM_HEADER"]) {
         parsedData = ((uint8_t)data[1] << 8) | ((uint8_t)data[0]);
-    }else if([header isEqualToString:@"AlarmTemperature_IND_HEADER"] || [header isEqualToString:@"AlarmTemperature_IND_HEADER"]){
+    }else if([header isEqualToString:@"BATTERY_CFM_HEADER"]){
+        parsedData = (int)data[0];
+    }else if([header isEqualToString:@"ALARMTEMPERATURE_IND_HEADER"]){
         parsedData = ((uint8_t)data[1] << 8) | ((uint8_t)data[0]);
-    }else {
-        parsedData = data[0];
+    }else if([header isEqualToString:@"ALARMBATTERY_IND_HEADER"]){
+        parsedData = (int)data[0];
+    }else if([header isEqualToString:@"ALARMTEMPERATURE_CFM_HEADER"]){
+        
     }
     return parsedData;
+}
+
+-(void) sendToSensor :(uint8_t[]) data :(int) length
+{
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        dispatch_async(dispatch_get_main_queue(), ^(void) {
+            NSData *d = [NSData dataWithBytes:data length:length];
+            NSLog(@"sendToSensor :: %@", d);
+            if(rxCharacteristic != nil){
+                @try{ [connectedDevice writeValue:d forCharacteristic:rxCharacteristic type:CBCharacteristicWriteWithoutResponse]; }
+                @catch(NSException *err){ NSLog(@"%@", err.debugDescription); }
+            }
+        });
+    });
 }
 
 
@@ -171,16 +220,12 @@ NSTimer *timer = nil;
     [connectedDevice discoverServices:nil];
     NSDictionary *dict = @{@"uuid": [connectedDevice.identifier UUIDString], @"name": connectedDevice.name};
     [_delegate onConnected: dict];
-//    NSString *msg = [NSString stringWithFormat:@"%@: %@", @"DEVICE_CONNECTED", [connectedDevice.identifier UUIDString]];
-//    [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:msg];
 }
 - (void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)RSSI
 {
-//    [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:@"NEW_DEVICE_SCANNED"];
     NSDictionary *device = @{@"uuid": [peripheral.identifier UUIDString], @"name": peripheral.name};
     [_delegate onScannedDevices:device];
     [devices addObject:peripheral];
-//    [centralManager connectPeripheral:devices[0] options:nil];
 }
 
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverServices:(NSError *)error
@@ -220,11 +265,20 @@ CBCharacteristic *txCharacteristic = nil;
 
 -(void)sendRequestTemp
 {
-    NSData *data = [NSData dataWithBytes:TEMPERATURE_REQ length:5];
-    if(rxCharacteristic != nil){
-        @try{ [connectedDevice writeValue:data forCharacteristic:rxCharacteristic type:CBCharacteristicWriteWithoutResponse]; }
-        @catch(NSException *err){ NSLog(@"%@", err.debugDescription); }
+   [self sendToSensor:TEMPERATURE_REQ :5];
+}
+
+-(uint8_t*) hexStringToByte :(NSString *) hexString
+{
+    uint8_t *result = (uint8_t *)malloc(sizeof(uint8_t) * ([hexString length] / 2));
+    for(int i = 0; i < [hexString length]; i += 2) {
+        NSRange range = { i, 2 };
+        NSString *subString = [hexString substringWithRange:range];
+        unsigned value;
+        [[NSScanner scannerWithString:subString] scanHexInt:&value];
+        result[i / 2] = (uint8_t)value;
     }
+    return result;
 }
 
 @end

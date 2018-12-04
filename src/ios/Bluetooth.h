@@ -22,8 +22,14 @@
 
 
 -(void) startScan;
+-(void) stopScan;
 -(Boolean) connect:(NSString *) uuid;
--(void) startLoop;
+-(void) disconnect;
+-(void) startLoop: (NSString *) time;
+-(void) resetSettings: (NSString *) time;
+-(void) setAlarmTemperature: (NSString *) temp;
+-(void) requestBattery;
+
 @property(nonatomic, retain) id<BluetoothProtocol> delegate;
 
 @end

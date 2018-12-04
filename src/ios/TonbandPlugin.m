@@ -8,11 +8,17 @@
     CDVPluginResult* pluginResult;
 }
 -(void)startService:(CDVInvokedUrlCommand*)command;
+-(void)stopService:(CDVInvokedUrlCommand*)command;
 -(void)checkBluetooth:(CDVInvokedUrlCommand*)command;
--(void)scan:(CDVInvokedUrlCommand*)command;
+-(void)startScan:(CDVInvokedUrlCommand*)command;
+-(void)stopScan:(CDVInvokedUrlCommand*)command;
 -(void)connect:(CDVInvokedUrlCommand*)command;
+-(void)startLoop:(CDVInvokedUrlCommand*)command;
+-(void)resetSettings:(CDVInvokedUrlCommand*)command;
+-(void)setAlarmTemperature:(CDVInvokedUrlCommand*)command;
+-(void)requestBattery:(CDVInvokedUrlCommand*)command;
 
-@property (nonatomic, strong) NSString* myCallbackId;
+@property (nonatomic, strong) NSString* scanCallback;
 @property (nonatomic, strong) NSString* connectionCallbackId;
 @property (nonatomic, strong) NSString* dataCallbackId;
 
@@ -28,42 +34,80 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(broadcastReceiver:) name:@"tonband_channel" object:nil];
 }
 
--(void)checkBluetooth:(CDVInvokedUrlCommand*)command
+- (void)stopService:(CDVInvokedUrlCommand *)command
 {
-    self.myCallbackId = command.callbackId;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-    [pluginResult setKeepCallbackAsBool:YES];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:self.myCallbackId];
-    NSLog(@":::::: checkBluetooth ::::::");
+    
 }
 
--(void)scan:(CDVInvokedUrlCommand*)command
+-(void)checkBluetooth:(CDVInvokedUrlCommand*)command
 {
-    self.myCallbackId = command.callbackId;
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [pluginResult setKeepCallbackAsBool:YES];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+-(void)startScan:(CDVInvokedUrlCommand*)command
+{
+    _scanCallback = command.callbackId;
     [self.commandDelegate runInBackground:^{
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
         [pluginResult setKeepCallbackAsBool:YES];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.myCallbackId];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:_scanCallback];
         [bluetooth startScan];
     }];
+}
+
+- (void)stopScan:(CDVInvokedUrlCommand *)command
+{
+    
+    [bluetooth stopScan];
 }
 
 -(void)connect:(CDVInvokedUrlCommand*)command
 {
     _connectionCallbackId = command.callbackId;
     [bluetooth connect:command.arguments[0]];
-//    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-//    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+-(void)disconnect:(CDVInvokedUrlCommand*)command
+{
+    [bluetooth disconnect];
+    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 
 -(void)startLoop:(CDVInvokedUrlCommand*)command
 {
     _dataCallbackId = command.callbackId;
-    [bluetooth startLoop];
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    NSString *time = command.arguments[0];
+    [bluetooth resetSettings: time];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
     [pluginResult setKeepCallbackAsBool:YES];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:self.myCallbackId];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:_dataCallbackId];
+}
+
+- (void)resetSettings:(CDVInvokedUrlCommand *)command
+{
+    [bluetooth resetSettings: command.arguments[0]];
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+- (void)setAlarmTemperature:(CDVInvokedUrlCommand *)command
+{
+    [bluetooth setAlarmTemperature:command.arguments[0]];
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+- (void)requestBattery:(CDVInvokedUrlCommand *)command
+{
+    [bluetooth requestBattery];
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
 
@@ -76,7 +120,6 @@
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:message];
     [pluginResult setKeepCallbackAsBool:YES];
     if([message containsString:@"DEVICE_CONNECTED"]) [self.commandDelegate sendPluginResult:pluginResult callbackId:self.connectionCallbackId];
-    else [self.commandDelegate sendPluginResult:pluginResult callbackId:self.myCallbackId];
 }
 
 
@@ -95,7 +138,6 @@
         NSData *data = [NSJSONSerialization dataWithJSONObject:device options:NSJSONWritingPrettyPrinted error:&error];
         if(error == nil){
             NSString *jsonString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-            NSLog(@"onConnected : %@", jsonString);
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:jsonString];
             [pluginResult setKeepCallbackAsBool:YES];
             [self.commandDelegate sendPluginResult:pluginResult callbackId:_connectionCallbackId];
@@ -108,6 +150,7 @@
         NSLog(@"%@", error.description);
     }
 }
+
 -(void) onDisconnected
 {
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
@@ -120,7 +163,6 @@
     NSData *dataObject = [NSJSONSerialization dataWithJSONObject:data options:NSJSONWritingPrettyPrinted error:&error];
     if(error == nil){
         NSString *jsonString = [[NSString alloc] initWithData:dataObject encoding:NSUTF8StringEncoding];
-        NSLog(@"onDataChanged: %@", jsonString);
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:jsonString];
         [pluginResult setKeepCallbackAsBool:YES];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:_dataCallbackId];
@@ -140,12 +182,12 @@
         NSLog(@"onScannedDevices: %@", jsonString);
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:jsonString];
         [pluginResult setKeepCallbackAsBool:YES];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:_myCallbackId];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:_scanCallback];
     }else{
         NSLog(@"onScannedDevices: Error: %@", error.description);
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
         [pluginResult setKeepCallbackAsBool:YES];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:_myCallbackId];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:_scanCallback];
     }
 }
 

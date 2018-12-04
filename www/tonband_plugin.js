@@ -23,6 +23,10 @@ exports.connect = function(deviceID, success, error){
     exec(success, error, 'TonbandPlugin', 'connect', [deviceID]);
 }
 
+exports.disconnect = function(success, error){
+    exec(success, error, 'TonbandPlugin', 'disconnect');
+}
+
 exports.startLoop = function(time, success, error){
     exec(success, error, 'TonbandPlugin', 'startLoop', [time]);
 }
