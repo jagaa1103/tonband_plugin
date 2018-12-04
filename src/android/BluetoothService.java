@@ -107,6 +107,10 @@ public class BluetoothService extends Service {
         myScanCallback = null;
         isStartedService = false;
         instance = null;
+        stopNotification();
+    }
+
+    public void stopNotification(){
         if (Build.VERSION.SDK_INT >= 26) stopForeground(notification.flags);
     }
 
@@ -114,6 +118,13 @@ public class BluetoothService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+        stopNotification();
+        this.stopSelf();
     }
 
     public void initService(Context context){

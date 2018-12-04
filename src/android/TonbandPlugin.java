@@ -34,10 +34,17 @@ public class TonbandPlugin extends CordovaPlugin {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        try{
-            BluetoothService.getInstance().onDestroy();
-            this.cordova.getActivity().stopService(intentBluetooth);
-        }catch(Exception e) { e.printStackTrace(); }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if(this.cordova.getActivity() == null || (this.cordova.getActivity() != null && this.cordova.getActivity().isDestroyed())) {
+            try{
+                BluetoothService.getInstance().stopNotification();
+                this.cordova.getActivity().stopService(intentBluetooth);
+            }catch(Exception e) { e.printStackTrace(); }
+        }
     }
 
     @Override
@@ -51,8 +58,7 @@ public class TonbandPlugin extends CordovaPlugin {
             return true;
         } else if(action.equals("stopService")){
             try{
-                this.cordova.getActivity().stopService(intentBluetooth);
-                BluetoothService.getInstance().onDestroy();
+                BluetoothService.getInstance().stopNotification();
                 this.cordova.getActivity().stopService(intentBluetooth);
             }catch(Exception e){
                 e.printStackTrace();
