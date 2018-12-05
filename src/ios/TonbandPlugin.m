@@ -68,6 +68,7 @@
     _connectionCallbackId = command.callbackId;
     [bluetooth connect:command.arguments[0]];
     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [pluginResult setKeepCallbackAsBool:YES];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
@@ -154,7 +155,6 @@
 -(void) onDisconnected
 {
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
-    [pluginResult setKeepCallbackAsBool:YES];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:_connectionCallbackId];
 }
 

@@ -210,6 +210,7 @@ NSTimer *timer = nil;
     connectedDevice = nil;
 //    [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:@"DEVICE_DISCONNECTED"];
     NSLog(@"DEVICE_DISCONNECTED");
+    
     [_delegate onDisconnected];
 }
 -(void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral
