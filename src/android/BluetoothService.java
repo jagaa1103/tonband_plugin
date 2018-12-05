@@ -155,6 +155,7 @@ public class BluetoothService extends Service {
         mScanner = adapter.getBluetoothLeScanner();
         ScanSettings scanSettings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
         List<ScanFilter> scanFilters = Arrays.asList( new ScanFilter.Builder().setServiceUuid(ParcelUuid.fromString(SERVICE_UUID)).build());
+        if(myScanCallback != null) myScanCallback = null;
         myScanCallback = new BluetoothScanCallback();
         mScanner.startScan(scanFilters, scanSettings, myScanCallback);
     }
@@ -278,14 +279,31 @@ public class BluetoothService extends Service {
         }
     }
 
+    GattCallback gattCallback = null;
     public void connectDevice(String uuid){
         for(BluetoothDevice device : deviceList){
             if(device.getAddress().equals(uuid)) {
-                gatt = device.connectGatt(mContext, false, new GattCallback());
+                if(gattCallback != null) {
+                    gattCallback = null;
+                }
+                gattCallback = new GattCallback();
+                gatt = device.connectGatt(mContext, false, gattCallback);
                 break;
             }
         }
+    }
 
+    public void disconnect(){
+        if(gatt != null) {
+            gatt.disconnect();
+            gatt.close();
+            gatt = null;
+            deviceList.clear();
+            if(timer != null) {
+                timer.cancel();
+                timer = null;
+            }
+        }
     }
 
     protected boolean sendToCharacteristics(byte[] data){

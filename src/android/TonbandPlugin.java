@@ -79,13 +79,20 @@ public class TonbandPlugin extends CordovaPlugin {
                 e.printStackTrace();
                 callbackContext.error("stopScan error");
             }
-        } else if(action.equals("connect")){
-            try{
+        } else if(action.equals("connect")) {
+            try {
                 String message = args.getString(0);
                 this.connect(message, args, callbackContext);
-            }catch(Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 callbackContext.error("connect error");
+            }
+            return true;
+        } else if(action.equals("disconnect")){
+            try{
+                this.disconnect(callbackContext);
+            }catch (Exception e){
+                e.printStackTrace();
             }
             return true;
         } else if(action.equals("startLoop")){
@@ -149,6 +156,11 @@ public class TonbandPlugin extends CordovaPlugin {
         PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
         result.setKeepCallback(true);
         connectionCallback.sendPluginResult(result);
+    }
+
+    private void disconnect(CallbackContext callbackContext){
+        BluetoothService.getInstance().disconnect();
+        callbackContext.success();
     }
 
     private void startLoop(CallbackContext callbackContext, String time) {
