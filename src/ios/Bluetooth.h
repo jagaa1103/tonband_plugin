@@ -20,16 +20,16 @@
 
 @interface Bluetooth : NSObject <CBCentralManagerDelegate, CBPeripheralDelegate>
 
-
++(Bluetooth *)sharedInstance;
 -(void) startScan;
 -(void) stopScan;
--(Boolean) connect:(NSString *) uuid;
+-(void) connect:(NSString *) uuid;
 -(void) disconnect;
 -(void) startLoop: (NSString *) time;
 -(void) resetSettings: (NSString *) time;
 -(void) setAlarmTemperature: (NSString *) temp;
 -(void) requestBattery;
 
-@property(nonatomic, retain) id<BluetoothProtocol> delegate;
+@property(weak, nonatomic) id <BluetoothProtocol> delegate;
 
 @end

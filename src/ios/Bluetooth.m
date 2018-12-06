@@ -28,6 +28,16 @@ CBCentralManager *centralManager = nil;
 NSMutableArray<CBPeripheral *> *devices = nil;
 CBPeripheral *connectedDevice = nil;
 
+
++ (id)sharedInstance {
+    static Bluetooth *sharedInstance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedInstance = [[self alloc] init];
+    });
+    return sharedInstance;
+}
+
 - (instancetype)init
 {
     self = [super init];
@@ -90,14 +100,17 @@ CBPeripheral *connectedDevice = nil;
 }
 
 NSTimer *timer = nil;
+NSString *lastSettedTime = nil;
 -(void) startLoop: (NSString *) time
 {
+    lastSettedTime = time;
     float t = [time floatValue] * 60;
     timer = [NSTimer scheduledTimerWithTimeInterval:t target:self selector:@selector(sendRequestTemp) userInfo:nil repeats:YES];
 }
 
 -(void) resetSettings:(NSString *)time
 {
+    lastSettedTime = time;
     [self sendRequestTemp];
     if(timer != nil){
         [timer invalidate];

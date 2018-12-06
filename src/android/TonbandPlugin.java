@@ -192,7 +192,9 @@ public class TonbandPlugin extends CordovaPlugin {
         scanCallback.sendPluginResult(result);
     }
     public void onConnect(){
-        connectionCallback.success();
+        PluginResult result = new PluginResult(PluginResult.Status.OK);
+        result.setKeepCallback(true);
+        connectionCallback.sendPluginResult(result);
     }
     public void onDisconnect(String message){
         connectionCallback.error(message);

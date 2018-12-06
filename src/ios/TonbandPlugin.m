@@ -4,7 +4,6 @@
 #import "Bluetooth.h"
 @interface TonbandPlugin : CDVPlugin <BluetoothProtocol>{
   // Member variables go here.
-    Bluetooth *bluetooth;
     CDVPluginResult* pluginResult;
 }
 -(void)startService:(CDVInvokedUrlCommand*)command;
@@ -29,8 +28,7 @@
 -(void)startService:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"::::::::: startService ::::::::::");
-    bluetooth = [[Bluetooth alloc] init];
-    bluetooth.delegate = self;
+    [Bluetooth sharedInstance].delegate = self;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(broadcastReceiver:) name:@"tonband_channel" object:nil];
 }
 
@@ -53,20 +51,20 @@
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
         [pluginResult setKeepCallbackAsBool:YES];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:_scanCallback];
-        [bluetooth startScan];
+        [[Bluetooth sharedInstance] startScan];
     }];
 }
 
 - (void)stopScan:(CDVInvokedUrlCommand *)command
 {
     
-    [bluetooth stopScan];
+    [[Bluetooth sharedInstance] stopScan];
 }
 
 -(void)connect:(CDVInvokedUrlCommand*)command
 {
     _connectionCallbackId = command.callbackId;
-    [bluetooth connect:command.arguments[0]];
+    [[Bluetooth sharedInstance] connect:command.arguments[0]];
     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [pluginResult setKeepCallbackAsBool:YES];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
@@ -74,7 +72,7 @@
 
 -(void)disconnect:(CDVInvokedUrlCommand*)command
 {
-    [bluetooth disconnect];
+    [[Bluetooth sharedInstance] disconnect];
     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -84,7 +82,7 @@
 {
     _dataCallbackId = command.callbackId;
     NSString *time = command.arguments[0];
-    [bluetooth resetSettings: time];
+    [[Bluetooth sharedInstance] resetSettings: time];
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
     [pluginResult setKeepCallbackAsBool:YES];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:_dataCallbackId];
@@ -92,21 +90,21 @@
 
 - (void)resetSettings:(CDVInvokedUrlCommand *)command
 {
-    [bluetooth resetSettings: command.arguments[0]];
+    [[Bluetooth sharedInstance] resetSettings: command.arguments[0]];
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
 - (void)setAlarmTemperature:(CDVInvokedUrlCommand *)command
 {
-    [bluetooth setAlarmTemperature:command.arguments[0]];
+    [[Bluetooth sharedInstance] setAlarmTemperature:command.arguments[0]];
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
 - (void)requestBattery:(CDVInvokedUrlCommand *)command
 {
-    [bluetooth requestBattery];
+    [[Bluetooth sharedInstance] requestBattery];
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
