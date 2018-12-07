@@ -27,6 +27,7 @@ import org.json.JSONObject;
 public class TonbandPlugin extends CordovaPlugin {
     CallbackContext scanCallback = null;
     CallbackContext connectionCallback = null;
+    CallbackContext disconnectCallback = null;
     CallbackContext dataCallback = null;
 
     Intent intentBluetooth = null;
@@ -131,12 +132,12 @@ public class TonbandPlugin extends CordovaPlugin {
         else this.cordova.getActivity().startService(intentBluetooth);
         LocalBroadcastManager.getInstance(this.cordova.getActivity().getApplicationContext()).registerReceiver(serviceBroadcastReceiver, new IntentFilter("tonband_channel"));
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) this.cordova.getActivity().requestPermissions(new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
-        BluetoothService.getInstance().initService(this.cordova.getActivity().getApplication().getApplicationContext());
         callbackContext.success();
     }
 
     private void startScan(CallbackContext callbackContext) {
         Log.d("TonbandPlugin", "@>> TonbandPlugin >> startScan");
+        BluetoothService.getInstance().initService(this.cordova.getActivity().getApplication().getApplicationContext());
         scanCallback = callbackContext;
         BluetoothService.getInstance().startScanning();
         PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
@@ -156,11 +157,17 @@ public class TonbandPlugin extends CordovaPlugin {
         PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
         result.setKeepCallback(true);
         connectionCallback.sendPluginResult(result);
+        forceDisconnect = false;
     }
 
+    Boolean forceDisconnect = false;
     private void disconnect(CallbackContext callbackContext){
-        BluetoothService.getInstance().disconnect();
-        callbackContext.success();
+        if(BluetoothService.getInstance() != null) BluetoothService.getInstance().disconnect();
+        disconnectCallback = callbackContext;
+        forceDisconnect = true;
+        PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
+        result.setKeepCallback(true);
+        disconnectCallback.sendPluginResult(result);
     }
 
     private void startLoop(CallbackContext callbackContext, String time) {
@@ -192,12 +199,14 @@ public class TonbandPlugin extends CordovaPlugin {
         scanCallback.sendPluginResult(result);
     }
     public void onConnect(){
+        forceDisconnect = false;
         PluginResult result = new PluginResult(PluginResult.Status.OK);
         result.setKeepCallback(true);
         connectionCallback.sendPluginResult(result);
     }
     public void onDisconnect(String message){
-        connectionCallback.error(message);
+        if(forceDisconnect) disconnectCallback.success("forceDisconnect");
+        else connectionCallback.error(message);
     }
 
     public void onDataChanged(String message){

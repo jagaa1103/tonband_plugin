@@ -151,6 +151,11 @@ public class BluetoothService extends Service {
 
     public void startScanning(){
         Log.d(TAG, "startScanning..");
+        if(adapter != null) {
+            adapter = null;
+        }
+        adapter = bluetoothManager.getAdapter();
+
         deviceList.clear();
         mScanner = adapter.getBluetoothLeScanner();
         ScanSettings scanSettings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
@@ -234,6 +239,12 @@ public class BluetoothService extends Service {
                     break;
                 case BluetoothGatt.STATE_DISCONNECTED:
                     sendBroadcast("onDisconnected", null);
+                    stopScanning();
+                    if(gatt != null){
+                        gatt.close();
+                        gatt = null;
+                        deviceList.clear();
+                    }
                     break;
             }
         }
@@ -283,9 +294,7 @@ public class BluetoothService extends Service {
     public void connectDevice(String uuid){
         for(BluetoothDevice device : deviceList){
             if(device.getAddress().equals(uuid)) {
-                if(gattCallback != null) {
-                    gattCallback = null;
-                }
+                if(gattCallback != null) gattCallback = null;
                 gattCallback = new GattCallback();
                 gatt = device.connectGatt(mContext, false, gattCallback);
                 break;
@@ -296,9 +305,6 @@ public class BluetoothService extends Service {
     public void disconnect(){
         if(gatt != null) {
             gatt.disconnect();
-            gatt.close();
-            gatt = null;
-            deviceList.clear();
             if(timer != null) {
                 timer.cancel();
                 timer = null;
@@ -307,7 +313,7 @@ public class BluetoothService extends Service {
     }
 
     protected boolean sendToCharacteristics(byte[] data){
-        if(rxCharacteristic != null){
+        if(gatt != null && rxCharacteristic != null){
             rxCharacteristic.setValue(data);
             boolean state = gatt.writeCharacteristic(rxCharacteristic);
             Log.d(TAG, "sendToCharacteristics : state : " + state);
