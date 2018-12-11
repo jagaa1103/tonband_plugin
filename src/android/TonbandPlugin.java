@@ -21,6 +21,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 /**
  * This class echoes a string called from JavaScript.
  */
@@ -29,6 +32,7 @@ public class TonbandPlugin extends CordovaPlugin {
     CallbackContext connectionCallback = null;
     CallbackContext disconnectCallback = null;
     CallbackContext dataCallback = null;
+    CallbackContext reconnectionCallback = null;
 
     Intent intentBluetooth = null;
 
@@ -118,9 +122,11 @@ public class TonbandPlugin extends CordovaPlugin {
             String temp = args.getString(0);
             this.setAlarmTemperature(temp);
             return true;
-        } else if (action.equals("requestBattery")){
+        } else if (action.equals("requestBattery")) {
             this.requestBattery();
             return true;
+        } else if (action.equals("reconnectionStart")){
+            this.reconnectionStart(callbackContext);
         }
         return false;
     }
@@ -192,21 +198,36 @@ public class TonbandPlugin extends CordovaPlugin {
         BluetoothService.getInstance().requestBattery();
     }
 
+
+    private void reconnectionStart(CallbackContext callbackContext){
+        reconnectionCallback = callbackContext;
+        PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
+        result.setKeepCallback(true);
+        reconnectionCallback.sendPluginResult(result);
+        startReconnection();
+    }
+
     public void onScannedDevices(String device){
         Log.d("TonbandPlugin", "Tonband @>> onScannedDevices: " + device);
         PluginResult result = new PluginResult(PluginResult.Status.OK, device);
         result.setKeepCallback(true);
         scanCallback.sendPluginResult(result);
     }
+
+
     public void onConnect(){
         forceDisconnect = false;
+        stopReconnection(false);
         PluginResult result = new PluginResult(PluginResult.Status.OK);
         result.setKeepCallback(true);
         connectionCallback.sendPluginResult(result);
     }
     public void onDisconnect(String message){
-        if(forceDisconnect) disconnectCallback.success("forceDisconnect");
-        else connectionCallback.error(message);
+        if(forceDisconnect) {
+            disconnectCallback.success("forceDisconnect");
+        }else{
+            connectionCallback.error(message);
+        }
     }
 
     public void onDataChanged(String message){
@@ -215,7 +236,6 @@ public class TonbandPlugin extends CordovaPlugin {
         result.setKeepCallback(true);
         dataCallback.sendPluginResult(result);
     }
-
 
 
     private BroadcastReceiver serviceBroadcastReceiver = new BroadcastReceiver(){
@@ -245,4 +265,45 @@ public class TonbandPlugin extends CordovaPlugin {
             }
         }
     };
+
+
+    Boolean isReconnection = false;
+    Timer reconnectionTimer = null;
+    public void startReconnection(){
+        isReconnection = true;
+        if(reconnectionTimer != null) {
+            reconnectionTimer.cancel();
+            reconnectionTimer = null;
+        }
+        TimerTask  timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                stopReconnection(true);
+            }
+        };
+        reconnectionTimer = new Timer();
+        reconnectionTimer.schedule(timerTask, 20000);
+        BluetoothService.getInstance().startScanning();
+    }
+    public void stopReconnection(Boolean isStartAgain){
+        if(reconnectionTimer != null) {
+            reconnectionTimer.cancel();
+            reconnectionTimer = null;
+        }
+        if(isStartAgain){
+            TimerTask task = new TimerTask() {
+                @Override
+                public void run() {
+                    startReconnection();
+                }
+            };
+            reconnectionTimer = new Timer();
+            reconnectionTimer.schedule(task, 10000);
+            BluetoothService.getInstance().stopScanning();
+        }
+        else {
+            BluetoothService.getInstance().stopScanning();
+            isReconnection = false;
+        }
+    }
 }
