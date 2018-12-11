@@ -126,7 +126,12 @@ public class TonbandPlugin extends CordovaPlugin {
             this.requestBattery();
             return true;
         } else if (action.equals("reconnectionStart")){
-            this.reconnectionStart(callbackContext);
+            try{
+                this.reconnectionStart(callbackContext);
+            }catch(Exception e) {
+                e.printStackTrace();
+            }
+            return true;
         }
         return false;
     }
@@ -191,16 +196,14 @@ public class TonbandPlugin extends CordovaPlugin {
         callbackContext.success();
     }
 
-    private void setAlarmTemperature(String temp){
-        BluetoothService.getInstance().setAlarmTemperature(temp);
-    }
+    private void setAlarmTemperature(String temp){ BluetoothService.getInstance().setAlarmTemperature(temp); }
 
     private void requestBattery(){
         BluetoothService.getInstance().requestBattery();
     }
 
-
     private void reconnectionStart(CallbackContext callbackContext){
+        counter = 0;
         reconnectionCallback = callbackContext;
         PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
         result.setKeepCallback(true);
@@ -215,7 +218,6 @@ public class TonbandPlugin extends CordovaPlugin {
         scanCallback.sendPluginResult(result);
     }
 
-
     public void onConnect(){
         forceDisconnect = false;
         stopReconnection(false);
@@ -223,6 +225,7 @@ public class TonbandPlugin extends CordovaPlugin {
         result.setKeepCallback(true);
         connectionCallback.sendPluginResult(result);
     }
+
     public void onDisconnect(String message){
         if(forceDisconnect) {
             disconnectCallback.success("forceDisconnect");
@@ -237,7 +240,6 @@ public class TonbandPlugin extends CordovaPlugin {
         result.setKeepCallback(true);
         dataCallback.sendPluginResult(result);
     }
-
 
     private BroadcastReceiver serviceBroadcastReceiver = new BroadcastReceiver(){
         @Override
@@ -267,15 +269,29 @@ public class TonbandPlugin extends CordovaPlugin {
         }
     };
 
-
     Boolean isReconnection = false;
     Timer reconnectionTimer = null;
+    int counter = 0;
     public void startReconnection(){
         isReconnection = true;
+        Log.d("TonbandPlugin", "<<<<<<<<<<<<<<<<<<<<<<< startReconnection >>>>>>>>>>>>>>>>> counter: " + counter);
         if(reconnectionTimer != null) {
             reconnectionTimer.cancel();
             reconnectionTimer = null;
         }
+        if(counter == 20 || counter == 40 || counter == 60 || counter == 80 || counter == 100){
+            Log.d("TonbandPlugin", "result sending...");
+            PluginResult result = new PluginResult(PluginResult.Status.OK);
+            result.setKeepCallback(true);
+            reconnectionCallback.sendPluginResult(result);
+        }else if(counter == 120){
+            PluginResult result = new PluginResult(PluginResult.Status.ERROR);
+            result.setKeepCallback(true);
+            reconnectionCallback.sendPluginResult(result);
+            stopReconnection(false);
+            return;
+        }
+        counter += 1;
         TimerTask  timerTask = new TimerTask() {
             @Override
             public void run() {
@@ -286,6 +302,7 @@ public class TonbandPlugin extends CordovaPlugin {
         reconnectionTimer.schedule(timerTask, 20000);
         BluetoothService.getInstance().startScanning();
     }
+
     public void stopReconnection(Boolean isStartAgain){
         if(reconnectionTimer != null) {
             reconnectionTimer.cancel();
@@ -303,7 +320,7 @@ public class TonbandPlugin extends CordovaPlugin {
             BluetoothService.getInstance().stopScanning();
         }
         else {
-            BluetoothService.getInstance().stopScanning();
+            if(BluetoothService.getInstance() != null ) BluetoothService.getInstance().stopScanning();
             isReconnection = false;
         }
     }

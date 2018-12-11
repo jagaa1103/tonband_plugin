@@ -232,7 +232,6 @@ public class BluetoothService extends Service {
             switch (newState){
                 case BluetoothGatt.STATE_CONNECTED:
                     gatt.discoverServices();
-                    sendBroadcast("onConnected", null);
                     stopScanning();
                     break;
                 case BluetoothGatt.STATE_CONNECTING:
@@ -264,6 +263,7 @@ public class BluetoothService extends Service {
                         }else if(characteristic.getUuid().toString().equalsIgnoreCase(TX_CHARACTERISTIC)){
                             txCharacteristic = characteristic;
                             gatt.setCharacteristicNotification(txCharacteristic, true);
+                            sendBroadcast("onConnected", null);
                         }
                     }
                 }
@@ -395,6 +395,7 @@ public class BluetoothService extends Service {
     }
 
     public boolean sendTemperatureReq(){
+        Log.d(TAG, ":::::::: sendTemperatureReq :::::::::");
         return sendToCharacteristics(TEMPERATURE_REQ);
     }
 
