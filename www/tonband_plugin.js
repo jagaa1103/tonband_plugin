@@ -42,3 +42,7 @@ exports.setAlarmTemperature = function(temp_hex, success, error){
 exports.requestBattery = function(success, error){
     exec(success, error, 'TonbandPlugin', 'requestBattery');
 }
+
+exports.reconnectionStart =  function(success, error){
+    exec(success, error, 'TonbandPlugin', 'reconnectionStart');
+}

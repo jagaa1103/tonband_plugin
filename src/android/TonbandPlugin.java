@@ -169,6 +169,7 @@ public class TonbandPlugin extends CordovaPlugin {
     Boolean forceDisconnect = false;
     private void disconnect(CallbackContext callbackContext){
         if(BluetoothService.getInstance() != null) BluetoothService.getInstance().disconnect();
+        stopReconnection(false);
         disconnectCallback = callbackContext;
         forceDisconnect = true;
         PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
