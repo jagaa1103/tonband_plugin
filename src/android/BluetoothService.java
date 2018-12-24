@@ -372,17 +372,24 @@ public class BluetoothService extends Service {
 
     public int parseBody(String header, byte[] data){
         int message2 = -1;
-        Log.d("Bluetooth", "@>> byte: " + data);
+        String dataString = "";
+        for(int i = 0; i < data.length; i++){
+            dataString += String.format("%02X", data[i]);
+        }
+        Log.d(TAG, "received bytes body: " + dataString);
         if(header.equals("TEMPERATURE_CFM_HEADER")){
             int message = 0;
-            message =  message | data[1];
-            message = message << 8;
-            message = message | (byte)(0x00000000 & data[0]);
+            short s1 = (short)((data[1] << 8) & 0xff00);
+            short s2 = (short)(data[0] & 0x00ff);
+            message = (int)(s1 | s2);
             return message;
         } else if (header.equals("ALARMTEMPERATURE_CFM_HEADER")) {
             return -1;
         } else if (header.equals("ALARMTEMPERATURE_IND_HEADER")) {
-            int message = (int)data[0];
+            int message = 0;
+            short s1 = (short)((data[1] << 8) & 0xff00);
+            short s2 = (short)(data[0] & 0x00ff);
+            message = (int)(s1 | s2);
             return message;
         } else if (header.equals("BATTERY_CFM_HEADER")) {
             int message = (int)data[0];
