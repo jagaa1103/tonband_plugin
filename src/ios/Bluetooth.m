@@ -111,7 +111,8 @@ NSString *lastSettedTime = nil;
 -(void) resetSettings:(NSString *)time
 {
     lastSettedTime = time;
-    [self sendRequestTemp];
+    [NSTimer scheduledTimerWithTimeInterval:2.0f target:self selector:@selector(sendRequestTemp) userInfo:nil repeats:NO];
+    // [self sendRequestTemp];
     if(timer != nil){
         [timer invalidate];
         timer = nil;
