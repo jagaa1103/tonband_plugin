@@ -16,10 +16,14 @@
 -(void)resetSettings:(CDVInvokedUrlCommand*)command;
 -(void)setAlarmTemperature:(CDVInvokedUrlCommand*)command;
 -(void)requestBattery:(CDVInvokedUrlCommand*)command;
+-(void)reconnectionStart:(CDVInvokedUrlCommand *)command;
+
 
 @property (nonatomic, strong) NSString* scanCallback;
 @property (nonatomic, strong) NSString* connectionCallbackId;
 @property (nonatomic, strong) NSString* dataCallbackId;
+@property (nonatomic, strong) NSString* reconnectionCallback;
+
 
 @end
 
@@ -109,6 +113,16 @@
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
+-(void)reconnectionStart:(CDVInvokedUrlCommand *)command
+{
+    counter = 0;
+    _reconnectionCallback = command.callbackId;
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
+    [result setKeepCallbackAsBool:YES];
+    [self.commandDelegate sendPluginResult:result callbackId:_reconnectionCallback];
+    [self startReconnection];
+}
+
 
 -(void) broadcastReceiver : (NSNotification * ) notification
 {
@@ -186,6 +200,51 @@
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
         [pluginResult setKeepCallbackAsBool:YES];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:_scanCallback];
+    }
+}
+
+Boolean isReconnection = true;
+NSTimer *reconnectionTimer = nil;
+int counter = 0;
+
+-(void) startReconnection
+{
+    isReconnection = true;
+    NSLog(@"TonbandPlugin <<<<<<<<<<<<<<<<<<<<<<< startReconnection >>>>>>>>>>>>>>>>> counter: %d", counter);
+    if(reconnectionTimer != nil) {
+        [reconnectionTimer invalidate];
+        reconnectionTimer = nil;
+    }
+    if(counter == 20 || counter == 40 || counter == 60 || counter == 80 || counter == 100){
+        NSLog(@"TonbandPlugin >> result sending...");
+        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [pluginResult setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:result callbackId:_reconnectionCallback];
+    }else if(counter == 120){
+        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+        [pluginResult setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:result callbackId:_reconnectionCallback];
+        [self stopReconnection:false];
+        return;
+    }
+    counter += 1;
+    reconnectionTimer = [NSTimer scheduledTimerWithTimeInterval:20.0f target:self selector:@selector(stopReconnection:) userInfo:nil repeats:NO];
+    [[Bluetooth sharedInstance] startScan];
+}
+
+-(void) stopReconnection: (Boolean) isStartAgain
+{
+    if(reconnectionTimer != nil) {
+        [reconnectionTimer invalidate];
+        reconnectionTimer = nil;
+    }
+    if(isStartAgain){
+        [[Bluetooth sharedInstance] stopScan];
+        reconnectionTimer = [NSTimer scheduledTimerWithTimeInterval:10.0f target:self selector:@selector(startReconnection) userInfo:nil repeats:NO];
+    }
+    else {
+        [[Bluetooth sharedInstance] stopScan];
+        isReconnection = false;
     }
 }
 
