@@ -26,6 +26,7 @@
 -(void) connect:(NSString *) uuid;
 -(void) disconnect;
 -(void) startLoop: (NSString *) time;
+-(void) stopLoop;
 -(void) resetSettings: (NSString *) time;
 -(void) setAlarmTemperature: (NSString *) temp;
 -(void) requestBattery;

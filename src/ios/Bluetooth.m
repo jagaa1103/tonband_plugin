@@ -107,6 +107,13 @@ NSString *lastSettedTime = nil;
     float t = [time floatValue] * 60;
     timer = [NSTimer scheduledTimerWithTimeInterval:t target:self selector:@selector(sendRequestTemp) userInfo:nil repeats:YES];
 }
+-(void) stopLoop
+{
+    if(timer != nil){
+        [timer invalidate];
+        timer = nil;
+    }
+}
 
 -(void) resetSettings:(NSString *)time
 {
@@ -224,7 +231,6 @@ NSString *lastSettedTime = nil;
     connectedDevice = nil;
 //    [[NSNotificationCenter defaultCenter] postNotificationName:@"tonband_channel" object:@"DEVICE_DISCONNECTED"];
     NSLog(@"DEVICE_DISCONNECTED");
-    
     [_delegate onDisconnected];
 }
 -(void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral

@@ -77,6 +77,7 @@
 -(void)disconnect:(CDVInvokedUrlCommand*)command
 {
     [[Bluetooth sharedInstance] disconnect];
+    [self stopLoop];
     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
@@ -90,6 +91,11 @@
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
     [pluginResult setKeepCallbackAsBool:YES];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:_dataCallbackId];
+}
+
+-(void)stopLoop
+{
+    [[Bluetooth sharedInstance] stopLoop];
 }
 
 - (void)resetSettings:(CDVInvokedUrlCommand *)command
@@ -166,6 +172,7 @@
 
 -(void) onDisconnected
 {
+    [self stopLoop];
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:_connectionCallbackId];
 }
