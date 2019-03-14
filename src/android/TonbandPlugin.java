@@ -54,7 +54,15 @@ public class TonbandPlugin extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        if(action.equals("startService")) {
+        if(action.equals("exitApp")){
+            try {
+                android.os.Process.killProcess(android.os.Process.myPid());
+                System.exit(1);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return true;
+        }else if(action.equals("startService")) {
             try {
                 this.startService(callbackContext);
             } catch (Exception e) {

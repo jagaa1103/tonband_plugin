@@ -6,6 +6,7 @@
   // Member variables go here.
     CDVPluginResult* pluginResult;
 }
+-(void)exitApp:(CDVInvokedUrlCommand*)command;
 -(void)startService:(CDVInvokedUrlCommand*)command;
 -(void)stopService:(CDVInvokedUrlCommand*)command;
 -(void)checkBluetooth:(CDVInvokedUrlCommand*)command;
@@ -28,6 +29,11 @@
 @end
 
 @implementation TonbandPlugin
+
+-(void)exitApp:(CDVInvokedUrlCommand*)command
+{
+    exit(0);
+}
 
 -(void)startService:(CDVInvokedUrlCommand*)command
 {

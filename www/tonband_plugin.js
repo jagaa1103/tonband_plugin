@@ -1,5 +1,9 @@
 var exec = require('cordova/exec');
 
+exports.exitApp = function(success, error){
+    exec(success, error, 'TonbandPlugin', 'exitApp');
+}
+
 exports.checkBluetooth = function(success, error){
     exec(success, error, 'TonbandPlugin', 'checkBluetooth');
 }
