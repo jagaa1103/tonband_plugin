@@ -3,7 +3,7 @@
 #import <Cordova/CDV.h>
 #import "Bluetooth.h"
 @interface TonbandPlugin : CDVPlugin <BluetoothProtocol>{
-  // Member variables go here.
+    // Member variables go here.
     CDVPluginResult* pluginResult;
 }
 -(void)exitApp:(CDVInvokedUrlCommand*)command;
@@ -132,6 +132,7 @@
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
     [result setKeepCallbackAsBool:YES];
     [self.commandDelegate sendPluginResult:result callbackId:_reconnectionCallback];
+    flagReconnection = true;
     [self startReconnection];
 }
 
@@ -237,21 +238,23 @@ int counter = 0;
         CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
         [pluginResult setKeepCallbackAsBool:YES];
         [self.commandDelegate sendPluginResult:result callbackId:_reconnectionCallback];
-        [self stopReconnection:false];
+        flagReconnection = false;
+        [self stopReconnection];
         return;
     }
     counter += 1;
-    reconnectionTimer = [NSTimer scheduledTimerWithTimeInterval:20.0f target:self selector:@selector(stopReconnection:) userInfo:nil repeats:NO];
+    reconnectionTimer = [NSTimer scheduledTimerWithTimeInterval:20.0f target:self selector:@selector(stopReconnection) userInfo:nil repeats:NO];
     [[Bluetooth sharedInstance] startScan];
 }
 
--(void) stopReconnection: (Boolean) isStartAgain
+Boolean flagReconnection = false;
+-(void) stopReconnection
 {
     if(reconnectionTimer != nil) {
         [reconnectionTimer invalidate];
         reconnectionTimer = nil;
     }
-    if(isStartAgain){
+    if(flagReconnection){
         [[Bluetooth sharedInstance] stopScan];
         reconnectionTimer = [NSTimer scheduledTimerWithTimeInterval:10.0f target:self selector:@selector(startReconnection) userInfo:nil repeats:NO];
     }
