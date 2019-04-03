@@ -79,19 +79,14 @@ CBPeripheral *connectedDevice = nil;
     [centralManager stopScan];
 }
 
--(Boolean) connect:(NSString *) uuid
+-(void) connect:(NSString *) uuid
 {
-    if(connectedDevice != nil) return true;
+    if(connectedDevice != nil) return;
     CBPeripheral *detectedDevice = nil;
     for(CBPeripheral *peripheral in devices){
         if([[peripheral.identifier UUIDString] isEqualToString:uuid]) detectedDevice = peripheral;
     }
-    if(detectedDevice != nil) {
-        [centralManager connectPeripheral:detectedDevice options:nil];
-        return true;
-    }else{
-        return false;
-    }
+    [centralManager connectPeripheral:detectedDevice options:nil];
 }
 
 -(void) disconnect
