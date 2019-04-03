@@ -309,6 +309,8 @@ public class BluetoothService extends Service {
                 timer.cancel();
                 timer = null;
             }
+        }else {
+            sendBroadcast("onDisconnected", null);
         }
     }
 

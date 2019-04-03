@@ -246,7 +246,7 @@ public class TonbandPlugin extends CordovaPlugin {
         Log.d("TonbandPlugin", "@>> onDataChanged: " + message);
         PluginResult result = new PluginResult(PluginResult.Status.OK, message);
         result.setKeepCallback(true);
-        dataCallback.sendPluginResult(result);
+        if(dataCallback != null) dataCallback.sendPluginResult(result);
     }
 
     private BroadcastReceiver serviceBroadcastReceiver = new BroadcastReceiver(){
