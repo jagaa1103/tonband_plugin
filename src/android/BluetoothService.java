@@ -26,6 +26,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.ParcelUuid;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.JobIntentService;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
@@ -96,6 +97,7 @@ public class BluetoothService extends Service {
          }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -157,6 +159,10 @@ public class BluetoothService extends Service {
         adapter = bluetoothManager.getAdapter();
 
         deviceList.clear();
+        if(mScanner != null) {
+            mScanner.stopScan(myScanCallback);
+            mScanner = null;
+        }
         mScanner = adapter.getBluetoothLeScanner();
         ScanSettings scanSettings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
         List<ScanFilter> scanFilters = Arrays.asList( new ScanFilter.Builder().setServiceUuid(ParcelUuid.fromString(SERVICE_UUID)).build());
