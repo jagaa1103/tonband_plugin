@@ -96,8 +96,7 @@ public class BluetoothService extends Service {
              startForeground(102, notification);
          }
     }
-
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    
     @Override
     public void onDestroy() {
         super.onDestroy();

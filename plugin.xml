@@ -15,6 +15,9 @@
         <config-file target="AndroidManifest.xml" parent="/manifest/application">
             <service android:name="cordova.plugin.tonband.BluetoothService" android:stopWithTask="false" />
         </config-file>
+        <config-file target="AndroidManifest.xml" parent="/manifest">
+            <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+        </config-file>
         <config-file parent="/*" target="AndroidManifest.xml" />
         <source-file src="src/android/TonbandPlugin.java" target-dir="src/cordova.plugin.tonband" />
         <source-file src="src/android/BluetoothService.java" target-dir="src/cordova.plugin.tonband" />

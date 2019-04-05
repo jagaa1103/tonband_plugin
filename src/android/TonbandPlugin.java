@@ -150,7 +150,10 @@ public class TonbandPlugin extends CordovaPlugin {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) this.cordova.getActivity().startForegroundService(intentBluetooth);
         else this.cordova.getActivity().startService(intentBluetooth);
         LocalBroadcastManager.getInstance(this.cordova.getActivity().getApplicationContext()).registerReceiver(serviceBroadcastReceiver, new IntentFilter("tonband_channel"));
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) this.cordova.getActivity().requestPermissions(new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            this.cordova.getActivity().requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+            this.cordova.getActivity().requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+        }
         callbackContext.success();
     }
 
