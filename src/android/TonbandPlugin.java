@@ -39,6 +39,10 @@ public class TonbandPlugin extends CordovaPlugin {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if(serviceBroadcastReceiver != null && this.cordova != null && this.cordova.getActivity() != null) {
+            this.cordova.getActivity().unregisterReceiver(serviceBroadcastReceiver);
+            serviceBroadcastReceiver = null;
+        }
     }
 
     @Override
