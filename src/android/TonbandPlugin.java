@@ -1,12 +1,14 @@
 package cordova.plugin.tonband;
 
 import android.Manifest;
+import android.app.Service;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.telecom.Call;
 import android.util.Log;
@@ -35,6 +37,16 @@ public class TonbandPlugin extends CordovaPlugin {
     CallbackContext reconnectionCallback = null;
 
     Intent intentBluetooth = null;
+
+    @Override
+    public void initialize(CordovaInterface cordova, CordovaWebView webView) {
+        super.initialize(cordova, webView);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
 
     @Override
     public void onDestroy() {
@@ -151,14 +163,26 @@ public class TonbandPlugin extends CordovaPlugin {
     private void startService(CallbackContext callbackContext) {
         Log.d("TonbandPlugin", "@>> TonbandPlugin >> startService");
         intentBluetooth = new Intent(this.cordova.getActivity().getApplicationContext(), BluetoothService.class);
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) this.cordova.getActivity().startForegroundService(intentBluetooth);
-        else this.cordova.getActivity().startService(intentBluetooth);
+        if(Build.VERSION.SDK_INT >= 28) {
+            this.cordova.getActivity().requestPermissions(new String[]{Manifest.permission.INSTANT_APP_FOREGROUND_SERVICE}, 1);
+        }
+        startBluetoothService();
         LocalBroadcastManager.getInstance(this.cordova.getActivity().getApplicationContext()).registerReceiver(serviceBroadcastReceiver, new IntentFilter("tonband_channel"));
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             this.cordova.getActivity().requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
             this.cordova.getActivity().requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         }
         callbackContext.success();
+    }
+
+    private void startBluetoothService(){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && this.cordova != null && this.cordova.getActivity().getApplicationContext() != null) {
+            this.cordova.getActivity().getApplicationContext().stopService(intentBluetooth);
+            this.cordova.getActivity().getApplicationContext().startForegroundService(intentBluetooth);
+        }
+        else {
+            this.cordova.getActivity().startService(intentBluetooth);
+        }
     }
 
     private void startScan(CallbackContext callbackContext) {
@@ -195,6 +219,7 @@ public class TonbandPlugin extends CordovaPlugin {
         PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
         result.setKeepCallback(true);
         disconnectCallback.sendPluginResult(result);
+        onDisconnect("disconnected");
     }
 
     private void startLoop(CallbackContext callbackContext, String time) {

@@ -85,18 +85,43 @@ public class BluetoothService extends Service {
     @Override
     public void onCreate() {
          super.onCreate();
-         instance = this;
-         if (Build.VERSION.SDK_INT >= 26) {
-             String CHANNEL_ID = "bluetooth_service";
-             String CHANNEL_NAME = "BluetoothService";
-
-             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
-             ((NotificationManager) getSystemService(this.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
-             notification = new NotificationCompat.Builder(this, CHANNEL_ID).setCategory(Notification.CATEGORY_SERVICE).setSmallIcon(R.mipmap.icon).setPriority(PRIORITY_MIN).build();
-             startForeground(102, notification);
-         }
+         Log.d("BluetoothService","BluetoothService >> onCreate");
+//         instance = this;
+//         if (Build.VERSION.SDK_INT >= 26) {
+//             String CHANNEL_ID = "bluetooth_service";
+//             String CHANNEL_NAME = "BluetoothService";
+//             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+//             ((NotificationManager) getSystemService(this.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+//             notification = new NotificationCompat.Builder(this, CHANNEL_ID).setCategory(Notification.CATEGORY_SERVICE).setSmallIcon(R.mipmap.icon).setPriority(PRIORITY_MIN).build();
+//             stopSelf();
+//             startForeground(102, notification);
+//         }
     }
-    
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d("BluetoothService","BluetoothService >> onStartCommand");
+        instance = this;
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                startNotification();
+            }
+        }, 5000);
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    private void startNotification() {
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationChannel channel = new NotificationChannel("bluetooth_service", "BluetoothService", NotificationManager.IMPORTANCE_DEFAULT);
+            ((NotificationManager) getSystemService(this.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+            notification = new NotificationCompat.Builder(this, "bluetooth_service").setCategory(Notification.CATEGORY_SERVICE).setSmallIcon(R.mipmap.icon).setPriority(PRIORITY_MIN).build();
+            stopForeground(true);
+//            stopSelf();
+            startForeground(102, notification);
+        }
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
