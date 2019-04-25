@@ -181,7 +181,12 @@ public class TonbandPlugin extends CordovaPlugin {
     private void startBluetoothService(){
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && this.cordova != null && this.cordova.getActivity().getApplicationContext() != null) {
             this.cordova.getActivity().getApplicationContext().stopService(intentBluetooth);
-            this.cordova.getActivity().getApplicationContext().startForegroundService(intentBluetooth);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    cordova.getActivity().getApplicationContext().startForegroundService(intentBluetooth);
+                }
+            }, 2000);
         }
         else {
             this.cordova.getActivity().startService(intentBluetooth);
@@ -274,7 +279,7 @@ public class TonbandPlugin extends CordovaPlugin {
         if(forceDisconnect) {
             disconnectCallback.success("forceDisconnect");
         }else{
-            connectionCallback.error(message);
+            if(connectionCallback != null) connectionCallback.error(message);
         }
     }
 
