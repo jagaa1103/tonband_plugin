@@ -1,12 +1,14 @@
 package cordova.plugin.tonband;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Service;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
@@ -168,10 +170,11 @@ public class TonbandPlugin extends CordovaPlugin {
         }
         startBluetoothService();
         LocalBroadcastManager.getInstance(this.cordova.getActivity().getApplicationContext()).registerReceiver(serviceBroadcastReceiver, new IntentFilter("tonband_channel"));
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            this.cordova.getActivity().requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
-            this.cordova.getActivity().requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
-        }
+//        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            this.cordova.getActivity().requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+//            this.cordova.getActivity().requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+            checkPermissions();
+//        }
         callbackContext.success();
     }
 
@@ -187,6 +190,7 @@ public class TonbandPlugin extends CordovaPlugin {
 
     private void startScan(CallbackContext callbackContext) {
         Log.d("TonbandPlugin", "@>> TonbandPlugin >> startScan");
+        checkPermissions();
         BluetoothService.getInstance().initService(this.cordova.getActivity().getApplication().getApplicationContext());
         scanCallback = callbackContext;
         BluetoothService.getInstance().startScanning();
@@ -362,6 +366,61 @@ public class TonbandPlugin extends CordovaPlugin {
         else {
             if(BluetoothService.getInstance() != null ) BluetoothService.getInstance().stopScanning();
             isReconnection = false;
+        }
+    }
+
+
+    int PERMISSIONS_REQUEST_CODE = 100;
+
+    public void checkPermissions(){
+        int PERMISSION_ALL = 1;
+        String[] permissions = {
+                Manifest.permission.BLUETOOTH,
+                Manifest.permission.BLUETOOTH_ADMIN,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+        };
+        Activity activity = this.cordova.getActivity();
+        Context context = this.cordova.getActivity().getApplicationContext();
+        try {
+
+            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null) {
+                int isPermissionEnabled = 0;
+                for (String permission : permissions) {
+                    if (activity.checkSelfPermission(permission) == PackageManager.PERMISSION_DENIED) {
+                        boolean isDontAskAgain = activity.shouldShowRequestPermissionRationale(permission);
+                        if(!isDontAskAgain) {
+                            Log.d("TonbandPlugin", "'Dont’ ask again' option is activated for Location/Storage Services. Please enable services in Settings to continue.");
+                            activity.requestPermissions(permissions, PERMISSIONS_REQUEST_CODE);
+                            break;
+                        } else {
+                            Log.d("TonbandPlugin",
+                                    "This app requires that Location/Storage Services be enabled for Bluetooth Low Energy devices. Please enable services in Settings to continue.");
+                            activity.requestPermissions(permissions, PERMISSIONS_REQUEST_CODE);
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) throws JSONException {
+        switch (requestCode) {
+            case PackageManager.PERMISSION_DENIED:
+                checkPermissions();
+                break;
+            case PackageManager.PERMISSION_GRANTED:
+                break;
+            case PackageManager.COMPONENT_ENABLED_STATE_DISABLED:
+                break;
+            case PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER:
+                break;
+            case PackageManager.COMPONENT_ENABLED_STATE_ENABLED:
+                break;
         }
     }
 }
